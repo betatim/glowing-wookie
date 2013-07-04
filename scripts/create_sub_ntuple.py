@@ -34,9 +34,9 @@ def combine_cuts(cuts):
     else:
       ret += "!(%s)" % cut
       
-    if cut_number is not 0:
-      if cut_number is not last_cut:
-        ret += "&&"
+    #if cut_number is not 0:
+    if cut_number is not last_cut:
+      ret += "&&"
         
   return ret
 
@@ -65,7 +65,7 @@ def change_branch_status(tree,branch_names):
   tree.SetBranchStatus("*",0)
   
   for branch_name in branch_names:
-    tree.SetBranchStatus(col,1)
+    tree.SetBranchStatus(branch_name,1)
   
   
 def create_tree(config):
@@ -106,8 +106,7 @@ def create_tree(config):
   br_Del_M = tree.Branch('Del_M',AddressOf(s,"Del_M"),'Del_M/F')
   br_RAND = tree.Branch('RAND',AddressOf(s,"RAND"),'RAND/F')
 
-  fr_Del_M = TTreeFormula('fr_Del_M','Del_M',tree)
-  fr_RAND = TTreeFormula('fr_RAND','RAND',tree)
+  fr_Del_M = TTreeFormula('fr_Del_M','Dst_M-D0_M',tree)
 
   print "Looping over all events"
   for i in range(total):
@@ -115,10 +114,10 @@ def create_tree(config):
       print "Now read entry",i+1,"of",total
     tree.GetEntry(i)
     #for i in Del_M RAND ; do echo "s.$i = fr_${i}.EvalInstance(0) ; br_$i.Fill()" ; done
-    s.Del_M = int(fr_Del_M.EvalInstance(0)) ; br_Del_M.Fill()
+    s.Del_M = fr_Del_M.EvalInstance(0) ; br_Del_M.Fill()
     s.RAND = random.random() ; br_RAND.Fill()
     
-  change_branch_status(tree, ['D0_M', 'Dst_M', 'Del_M'])
+  change_branch_status(tree, ['D0_M', 'Dst_M', 'Del_M', 'RAND'])
 
   tree.SetName('subTree')
   tree.Write()
@@ -128,7 +127,7 @@ def create_tree(config):
   outFile.cd()
   outTree = tree.CloneTree(-1)
 
-  print "Writing to", outfilename
+  print "Writing to", config['outfile']
   outTree.Write()
   outFile.Close()
 
