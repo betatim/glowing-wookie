@@ -43,7 +43,8 @@ def combine_cuts(cuts):
 
 
 cuts = ""
-pipiPidCut = "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && pi_ProbNNpi > 0.6"
+pipiPidCut = "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && pi_ProbNNpi > 0.6 &&"+\
+             "x1_ProbNNk < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7"
 likeSignCut = "x1_ID*x2_ID>0"
 
 directory = "/afs/cern.ch/work/t/tbird/demu/ntuples/"
