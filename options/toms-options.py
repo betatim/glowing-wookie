@@ -17,11 +17,11 @@ except NameError:
 
   stripRun = False
   stripConf = "default"
-  stripLine = "pipi"
+  stripLine = "emu"
   dataType = "data"
-  blinded = False
+  blinded = True
   hltReport = False
-  tupleDecay = "pipi"
+  tupleDecay = "emu" #"pipi"
   evtMax = -1
   mag = "up"
 
