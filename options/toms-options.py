@@ -17,11 +17,11 @@ except NameError:
 
   stripRun = False
   stripConf = "default"
-  stripLine = "pipi"
+  stripLine = "emu"
   dataType = "data"
-  blinded = False
+  blinded = True
   hltReport = False
-  tupleDecay = "pipi"
+  tupleDecay = "emu" #"pipi"
   evtMax = -1
   mag = "up"
 
@@ -508,7 +508,7 @@ dttuple.TupleToolTISTOS.TriggerList = [
   ]
 
 D_variables = {"DIRA": "BPVDIRA",
-               # XXX how to get the actual IP?
+               "IP": "IPMIN",
                "IPChi2": "BPVVDCHI2",
                # Min IP wrt all primary verticies
                "MinIP_PRIMARY": "MIPDV(PRIMARY)",
@@ -521,6 +521,7 @@ lepton_variables = {"TOMPT": "PT",
                     "TOMP": "P",
                     "TRCHI2DOF": "TRCHI2DOF",
                     "TRGHOSTPROB": "TRGHOSTPROB",
+                    "IP": "IPMIN",
                     # XXX should this be BPVIPCHI2()?
                     "IPChi2": "BPVVDCHI2",
                     # Min IP wrt all primary verticies
