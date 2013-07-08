@@ -22,7 +22,7 @@ except NameError:
   blinded = True
   hltReport = False
   tupleDecay = "emu" #"pipi"
-  evtMax = -1
+  evtMax = 1000
   mag = "up"
 
 
@@ -395,16 +395,28 @@ import GaudiKernel.SystemOfUnits as Units
 
 dttuple = DecayTreeTuple( "Demu_NTuple" )
 
-dttuple.ToolList = [ "TupleToolPropertime"
-                  , "TupleToolTrigger"
-                  , "TupleToolKinematic"
-                  , "TupleToolGeometry"
-                  , "TupleToolEventInfo"
-                  , "TupleToolPrimaries"
-                  , "TupleToolTISTOS"
-                  , "TupleToolPid"
-                  , "TupleToolTrackInfo"
-                  , "TupleToolRecoStats"
+dttuple.ToolList = ["TupleToolGeometry",
+                    "TupleToolEventInfo",
+                    "TupleToolGeometry",
+                    "TupleToolKinematic",
+                    "TupleToolPid",
+                    "TupleToolPrimaries",
+                    "TupleToolPropertime",
+                    "TupleToolTrackInfo",
+                    "TupleToolAngles",
+                    "TupleToolPid",
+                    "TupleToolDecay",
+                    "TupleToolGeneration",
+                    "TupleToolTrigger",
+                    "TupleToolTrackIsolation",
+                    "TupleToolTrackInfo",
+                    "TupleToolTrackPosition",
+                    "TupleToolBremInfo",
+                    "TupleToolTrigger",
+                    "TupleToolTISTOS",
+                    "TupleToolTrackInfo",
+                    "TupleToolRecoStats",
+                    "TupleToolDira",
                     ]
 if blinded:
   dttuple.Inputs = blind_Seq.outputLocations()#[ "Phys/DstarD02xxDst2PiD02pipiBox/Particles" ]
@@ -473,19 +485,19 @@ dttuple.TupleToolTISTOS.VerboseHlt1 = True
 dttuple.TupleToolTISTOS.VerboseHlt2 = True
 dttuple.TupleToolTISTOS.Verbose = True
 dttuple.TupleToolTISTOS.TriggerList = [
-  "L0Global",
+  #"L0Global",
   "L0DiMuonDecision",
   "L0ElectronDecision",
   "L0HadronDecision",
   "L0MuonDecision",
   "L0MuonHighDecision",
   "L0PhotonDecision",
-  "Hlt1Global",
+  #"Hlt1Global",
   "Hlt1SingleMuonNoIPL0Decision",
   "Hlt1TrackAllL0Decision",
   "Hlt1TrackMuonDecision",
   "Hlt1SingleMuonNoIPL0HighPTDecision",
-  "Hlt2Global",
+  #"Hlt2Global",
   "Hlt2Dst2PiD02EMuDecision",
   "Hlt2Dst2PiD02KMuDecision",
   "Hlt2Dst2PiD02KPiDecision",
@@ -508,7 +520,7 @@ dttuple.TupleToolTISTOS.TriggerList = [
   ]
 
 D_variables = {"DIRA": "BPVDIRA",
-               "IP": "IPMIN",
+               #"IP": "IPMIN",
                "IPChi2": "BPVVDCHI2",
                # Min IP wrt all primary verticies
                "MinIP_PRIMARY": "MIPDV(PRIMARY)",
@@ -521,7 +533,7 @@ lepton_variables = {"TOMPT": "PT",
                     "TOMP": "P",
                     "TRCHI2DOF": "TRCHI2DOF",
                     "TRGHOSTPROB": "TRGHOSTPROB",
-                    "IP": "IPMIN",
+                    "IP": "MIPDV(OWN)",
                     # XXX should this be BPVIPCHI2()?
                     "IPChi2": "BPVVDCHI2",
                     # Min IP wrt all primary verticies
