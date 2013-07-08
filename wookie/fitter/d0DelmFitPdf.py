@@ -79,8 +79,9 @@ def setup_workspace():
   w.factory("PROD::Sig(DelM_Sig_Gaus,D0M_Sig_Gaus)")
   w.factory("PROD::Comb(DelM_Bkg,D0M_Bkg_Exp)")
   w.factory("PROD::Prompt(DelM_Bkg,D0M_Sig_Gaus)")
+  
 
-  w.factory("SUM::Final_PDF(Frac_Sig[0.1,0,0.6]*Sig,Frac_Prompt[0.05,0,0.3]*Prompt,Comb)")
+  w.factory("SUM::Final_PDF(N_Sig[100,0,1000]*Sig,N_Prompt[100,0,1000]*Prompt,N_Comb[1000,0,10000]*Comb)")
 
 
   return w

@@ -88,7 +88,7 @@ for config in to_merge:
     
   file_name = dir_name + "strip_%s.root" % (config['strip'])
   file_list = ""
-  for f in files: file_list += f + " "
+  for f in files: file_list += f + " " #TODO: up doesnt get deleted
   subprocess.call("cd %s ; hadd -f %s %s ; rm %s" % (dir_name, file_name, file_list, file_list), shell=True)
   
 

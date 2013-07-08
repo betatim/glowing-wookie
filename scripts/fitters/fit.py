@@ -114,10 +114,6 @@ import wookie.fitter.d0DelmFitPdf as pdf
 
 w = pdf.setup_workspace()
 
-#exec(open("util_fit_functions.py"))
-
-#exec(open("util_setup_pdf.py"))
-
 D0_M = w.obj("D0_M")
 Del_M = w.obj("Del_M")
 Final_PDF = w.obj("Final_PDF")
@@ -135,9 +131,9 @@ componantColours = [
 
 
 
-systFile = open("syst_"+systName+".py")
-exec(systFile)
+exec("import syst_"+systName+" as syst")
 
+#config += syst.config #TODO: make a merger
 
 
 
