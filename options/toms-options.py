@@ -507,56 +507,50 @@ dttuple.TupleToolTISTOS.TriggerList = [
   "Hlt2UnbiasedDiMuonLowMassDecision"
   ]
 
-
-
-
-
-
-
-
+D_variables = {"DIRA": "BPVDIRA",
+               # XXX how to get the actual IP?
+               "IPChi2": "BPVVDCHI2",
+               # Min IP wrt all primary verticies
+               "MinIP_PRIMARY": "MIPDV(PRIMARY)",
+               "MinIPChi2_PRIMARY": "MIPCHI2DV(PRIMARY)",
+               "VChi2_per_NDOF": "VFASPF(VCHI2/VDOF)",
+               #"AMAXDOCA": "AMAXDOCA('')",
+             }
+# XXX How to calculate the DOCA of the two leptons?
+lepton_variables = {"TOMPT": "PT",
+                    "TOMP": "P",
+                    "TRCHI2DOF": "TRCHI2DOF",
+                    "TRGHOSTPROB": "TRGHOSTPROB",
+                    # XXX should this be BPVIPCHI2()?
+                    "IPChi2": "BPVVDCHI2",
+                    # Min IP wrt all primary verticies
+                    "MinIP_PRIMARY": "MIPDV(PRIMARY)",
+                    "MinIPChi2_PRIMARY": "MIPCHI2DV(PRIMARY)",
+                    "VChi2_per_NDOF": "VFASPF(VCHI2/VDOF)",
+}
 dttuple.addTool(TupleToolDecay, name = "x2")
 LoKi_x2=LoKi__Hybrid__TupleTool("LoKi_x2")
-LoKi_x2.Variables =  {
-    "TOMPT" : "PT",
-    "TOMP" : "P",
-    "TRCHI2DOF" : "TRCHI2DOF",
-    "MIPCHI2DV_PRIMARY_" : "MIPCHI2DV(PRIMARY)",
-    "TRGHOSTPROB" : "TRGHOSTPROB"
-    }
+LoKi_x2.Variables = lepton_variables
 dttuple.x2.addTool(LoKi_x2)
 dttuple.x2.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_x2"]
 
-
 dttuple.addTool(TupleToolDecay, name = "x1")
 LoKi_x1=LoKi__Hybrid__TupleTool("LoKi_x1")
-LoKi_x1.Variables =  {
-    "TOMPT" : "PT",
-    "TOMP" : "P",
-    "TRCHI2DOF" : "TRCHI2DOF",
-    "MIPCHI2DV_PRIMARY_" : "MIPCHI2DV(PRIMARY)",
-    "TRGHOSTPROB" : "TRGHOSTPROB"
-    }
+LoKi_x1.Variables = lepton_variables
 dttuple.x1.addTool(LoKi_x1)
 dttuple.x1.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_x1"]
 
-
-dttuple.addTool(TupleToolDecay, name = "D0")
+dttuple.addTool(TupleToolDecay, name="D0")
 LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
-LoKi_D0.Variables =  {
-    "BPVDIRA" : "BPVDIRA",
-    #"INGENERATION" : "INGENERATION( (MIPCHI2DV(PRIMARY)>8),1 )",
-    "BPVVDCHI2" : "BPVVDCHI2",
-    "MIPCHI2DV_PRIMARY_" : "MIPCHI2DV(PRIMARY)",
-    "VFASPF" : "VFASPF(VCHI2/VDOF)",
-    #"AMAXDOCA" : "AMAXDOCA('')",
-    #"ADAMASS" : "ADAMASS('D0')",
-    #"AMAXCHILDPT" : "AMAXCHILD(PT)",
-    #"APT" : "APT"
-    }
+LoKi_D0.Variables = D_variables
 dttuple.D0.addTool(LoKi_D0)
 dttuple.D0.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_D0"]
 
-
+dttuple.addTool(TupleToolDecay, name="Dst")
+LoKi_Dst=LoKi__Hybrid__TupleTool("LoKi_Dst")
+LoKi_Dst.Variables = D_variables
+dttuple.Dst.addTool(LoKi_Dst)
+dttuple.Dst.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_Dst"]
 
 
 if "MC" in dataType:
