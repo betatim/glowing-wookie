@@ -15,14 +15,14 @@ except NameError:
   #evtMax = -1
   #mag = "down"
 
-  stripRun = False
+  stripRun = True
   stripConf = "default"
   stripLine = "emu"
-  dataType = "data"
-  blinded = True
+  dataType = "MC10" #"data"
+  blinded = False
   hltReport = False
   tupleDecay = "emu" #"pipi"
-  evtMax = 1000
+  evtMax = -1
   mag = "up"
 
 
@@ -429,12 +429,6 @@ else:
 print "tuple input :",dttuple.Inputs
 print "number of events:", DaVinci().EvtMax
  
-#dttuple.Inputs = [ "Phys/DstarD02xxDst2PiD02emuBox/Particles" ]
-#dttuple.Decay = "[[D*(2010)+]cc -> (^[D0]cc -> ^e+ ^mu-) ^[pi+]cc]cc"
-#dttuple.Decay = "D*(2010)+ -> (^D0 -> ^e+ ^mu-) ^pi+"
-#dttuple.Decay = "D*(2010)- -> (^D0 -> ^e+ ^mu-) ^pi-"
-#dttuple.Decay = "[[D*(2010)-] -> (^[D0] -> ^e- ^mu+) ^[pi-]]"
-
 if tupleDecay == "ls":
   dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^e+ ^mu+]cc) ^pi+]cc"
   dttuple.Branches = {
@@ -476,10 +470,8 @@ elif tupleDecay == "mumu":
 
 
 dttuple.TupleName = "Demu_NTuple"
-
-dttuple.addTool( TupleToolPropertime() )
-
-dttuple.addTool( TupleToolTISTOS() )
+dttuple.addTool(TupleToolPropertime())
+dttuple.addTool(TupleToolTISTOS())
 dttuple.TupleToolTISTOS.VerboseL0 = True
 dttuple.TupleToolTISTOS.VerboseHlt1 = True
 dttuple.TupleToolTISTOS.VerboseHlt2 = True
@@ -520,12 +512,12 @@ dttuple.TupleToolTISTOS.TriggerList = [
   ]
 
 D_variables = {"DIRA": "BPVDIRA",
-               #"IP": "IPMIN",
                "IPChi2": "BPVVDCHI2",
                # Min IP wrt all primary verticies
                "MinIP_PRIMARY": "MIPDV(PRIMARY)",
                "MinIPChi2_PRIMARY": "MIPCHI2DV(PRIMARY)",
                "VChi2_per_NDOF": "VFASPF(VCHI2/VDOF)",
+               "DOCA": "DOCA(1, 2)",
                #"AMAXDOCA": "AMAXDOCA('')",
              }
 # XXX How to calculate the DOCA of the two leptons?
@@ -533,7 +525,6 @@ lepton_variables = {"TOMPT": "PT",
                     "TOMP": "P",
                     "TRCHI2DOF": "TRCHI2DOF",
                     "TRGHOSTPROB": "TRGHOSTPROB",
-                    "IP": "MIPDV(OWN)",
                     # XXX should this be BPVIPCHI2()?
                     "IPChi2": "BPVVDCHI2",
                     # Min IP wrt all primary verticies
@@ -553,6 +544,12 @@ LoKi_x1.Variables = lepton_variables
 dttuple.x1.addTool(LoKi_x1)
 dttuple.x1.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_x1"]
 
+dttuple.addTool(TupleToolDecay, name="pi")
+LoKi_pi = LoKi__Hybrid__TupleTool("LoKi_pi")
+LoKi_pi.Variables = lepton_variables
+dttuple.x2.addTool(LoKi_pi)
+dttuple.x2.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi"]
+
 dttuple.addTool(TupleToolDecay, name="D0")
 LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
 LoKi_D0.Variables = D_variables
@@ -570,11 +567,10 @@ if "MC" in dataType:
   dttuple.addTool(TupleToolMCBackgroundInfo, name="TupleToolMCBackgroundInfo")
   dttuple.TupleToolMCBackgroundInfo.Verbose=True
   dttuple.addTool(TupleToolMCTruth, name="truth")
-  dttuple.truth.ToolList+=["MCTupleToolHierarchy"]
-  dttuple.ToolList+=["TupleToolMCBackgroundInfo/TupleToolMCBackgroundInfo"]
-  dttuple.ToolList+=["TupleToolMCTruth/truth"]
-
-
+  dttuple.truth.ToolList += ["MCTupleToolHierarchy",
+                             "TupleToolMCBackgroundInfo/TupleToolMCBackgroundInfo",
+                             "TupleToolMCTruth/truth",
+                             "MCTupleToolKinematic"]
 
 #from Configurables import DaVinci, PrintDecayTree, GaudiSequencer
 #from Configurables import LoKi__HDRFilter
