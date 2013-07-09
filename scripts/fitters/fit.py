@@ -37,7 +37,7 @@ config = {
   'loadFit': False,
   #'loadFit': not doFit,
   'doNlls': True,
-  'doBinned': False,
+  'doBinned': True,
   'doBinnedNll': True,
   'doPlots': True,
   'visError': False,
@@ -45,7 +45,7 @@ config = {
   'doPlotsAsymLong': False,
   'partialNlls': False,
 
-  'cutStr': "",
+  'cutStr': "RAND<0.1",
 
   'binScale': 1.,
 
@@ -120,12 +120,12 @@ Final_PDF = w.obj("Final_PDF")
 
 
 componantColours = [
-    ["*TM_Peak_*", 16, ROOT.kSolid,16,1001],
-    ["*TM_NSide1", 14, 7],
-    ["*TM_NSide2", ROOT.kRed+4, 4],
-    ["*TM_Bplus_Bd,*TM_Bplus_Bs", ROOT.kMagenta+2, ROOT.kSolid,0,0,1],
-    ["*TM_Sig_Bs", ROOT.kGreen+4],
-    ["*TM_Sig_Bd,*TM_Sig_Bd_in_Bs", ROOT.kGreen+2],
+    ["Sig", 16, ROOT.kSolid,16,1001],
+    ["Comb", 14, 7],
+    ["Prompt", ROOT.kRed+4, 4],
+    ["MisId", ROOT.kMagenta+2, ROOT.kSolid,0,0,1],
+    ["D0M_Bkg_Exp", ROOT.kGreen+4],
+    ["D0M_Bkg_Poly", ROOT.kGreen+2],
     ["*", ROOT.kBlue]
   ]
 
@@ -504,7 +504,11 @@ if config['doPlots']:
 
 def nllPlot(var,dpll):
   nframe = var.frame(RooFit.Title("nll plot of " + var.GetName()))
-  nll.plotOn(nframe,RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kDashed))
+  arguments = RooLinkedList()
+  for arg in [RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kDashed)]:
+    arguments.Add(arg)
+  nll.plotOn(nframe,arguments)
+  #nll.plotOn(nframe,RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kDashed))
   #nll.plotOn(nframe,RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kSolid))
   #nframe.GetYaxis().SetRangeUser(0,2000)
   if dpll:
@@ -535,9 +539,9 @@ def allNlls(cpus=10,mixedSignals=False):
       print var.GetName(), "is constant, skipping"
       sys.stdout.flush()
       continue
-    if partialNlls != False:
-      if not partialNlls in var.GetName():
-        print var.GetName(), "doesn't have", partialNlls, "in its name"
+    if config['partialNlls'] != False:
+      if not config['partialNlls'] in var.GetName():
+        print var.GetName(), "doesn't have", config['partialNlls'], "in its name"
         continue
     print var.GetName(), "looks good calculating nll plot"
     sys.stdout.flush()
@@ -546,12 +550,6 @@ def allNlls(cpus=10,mixedSignals=False):
     #nll_file = TFile.Open("nllPlots.root","UPDATE")
     #np.Write("NllOf_"+var.GetName())
     #nll_file.Close()
-  if config['doBinnedNll']:
-    nll = Final_PDF.createNLL(fullUnbDataSet, RooFit.NumCPU(nCPUs,True))
-    print "T_Sig_Bd_dM_unbinned looks good calculating nll plot"
-    out.append(["T_Sig_Bd_dM_unbinned",nllPlot(w.obj("T_Sig_Bd_dM"),doPll)])
-    print "T_Sig_Bs_dM_unbinned looks good calculating nll plot"
-    out.append(["T_Sig_Bs_dM_unbinned",nllPlot(w.obj("T_Sig_Bs_dM"),doPll)])
 
   return out
 
@@ -585,7 +583,7 @@ timers["nlls"].Start()
 print "Starting nll plots"
 sys.stdout.flush()
 
-if doNlls:
+if config['doNlls']:
   nll = False
   if config['doBinnedNll']:
     nll = Final_PDF.createNLL(fullDataSet, RooFit.NumCPU(nCPUs,True))

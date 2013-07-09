@@ -4,9 +4,16 @@ import sys
 import subprocess
 
 to_merge = [
-  {
-    "up"   : None,
-    "down" : 145,
+  #{ # this is really loose
+    #"up"   : None,
+    #"down" : 145,
+    #"strip": "emu",
+    #"data" : "emu",
+    #"mc"   : True
+  #},
+  { # no triggers
+    "up"   : 92,
+    "down" : 91,
     "strip": "emu",
     "data" : "emu",
     "mc"   : True
@@ -72,8 +79,8 @@ for config in to_merge:
   data_type = ("mc" if config['mc'] else "") + config['data']
   dir_name = directory + data_type + "/"
   
+  files = []
   for magnet_polarity in ["up", "down"]:
-    files = []
     if config[magnet_polarity] is None:
       print "Skipping %s %s" % (data_type, config['strip'])
       continue

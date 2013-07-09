@@ -5,26 +5,14 @@ from ROOT import TFeldmanCousins, TRolke
 
 
 br_pipi = 1.401e-3
-e_pipi = 1.8e-2
+e_pipi = 1.8e-2 * .3 *.3
 br_exp_emu = 1e-14
-e_emu = 3.1e-2
+e_emu = 3.1e-2 * 38.53e-2
 
 n_tot_pipi = 15102431. # (down)
 n_tot_emu = 501396.  # (down)
 
-n_norm_pipi = (br_pipi) * n_tot_pipi
-n_norm_emu = (br_exp_emu) * n_tot_pipi
-
-n_exp_pipi = n_norm_pipi * e_pipi
-n_exp_emu = n_norm_emu * e_emu
-
-br_emu = br_pipi * (n_exp_emu*e_pipi)/(n_exp_pipi*e_emu)
-
-print n_norm_pipi, n_norm_emu
-print n_exp_pipi,  n_exp_emu
-
-back = 150.
-obs = round(n_exp_emu) + back
+n_pipi = 8.5383e+03
 
 
 #fc = TFeldmanCousins(.9)
@@ -53,7 +41,7 @@ tr.SetPoissonBkgKnownEff(x,y,tau,e)
 tr.GetLimits(ll,ul)
 
 print ll, ul
-print br_pipi * (ll*e_pipi)/(n_exp_pipi*e_emu), br_pipi * (ul*e_pipi)/(n_exp_pipi*e_emu)
+print br_pipi * (ll*e_pipi)/(n_pipi*e_emu), br_pipi * (ul*e_pipi)/(n_pipi*e_emu)
 
-
+# aim better than 2.6e-7
 

@@ -69,19 +69,25 @@ def setup_workspace():
   w.defineSet("argsPreCut","D0_M,Del_M,RAND")
 
   w.factory("RooGaussian::D0M_Sig_Gaus(D0_M,D0M_Sig_Gaus_Mean[1900,1800,2000],D0M_Sig_Gaus_Sigma[10,1,30])")
-  w.factory("RooExponential::D0M_Bkg_Exp(D0_M,D0M_Bkg_Exp_Const[-0.001,-0.00001,1])")
+  #w.factory("RooGenericPdf::D0M_Bkg_Exp('exp((D0_M-1800)*D0M_Bkg_Exp_Const)',{D0_M,D0M_Bkg_Exp_Const[-0.1,-0.00001,1]})")
+  w.factory("RooGaussian::D0M_MisId_Gaus(D0_M,D0M_MisId_Gaus_Mean[1800,1700,1820],D0M_Sig_Gaus_Sigma)")
+  #w.factory("RooExponential::D0M_Bkg_Exp(D0_M_shifted,D0M_Bkg_Exp_Const[-0.1,-0.00001,1])")
+  w.factory("RooChebychev::D0M_Bkg_Poly(D0_M,{D0M_Bkg_Poly_a1[0,-1,1]})")
+  #w.factory("SUM::D0M_Bkg(D0M_Bkg_Exp_Frac[0.3,0,1]*D0M_Bkg_Exp,D0M_Bkg_Poly)")
+  
 
 
-  w.factory("RooGaussian::DelM_Sig_Gaus(Del_M,DelM_Sig_Gaus_Mean[145,140,155],DelM_Sig_Gaus_Sigma[20,2,50] )")
-  w.factory("RooDstD0BG::DelM_Bkg(Del_M,DelM_Bkg_m0[140,139,155],DelM_Bkg_c[1,0,10],DelM_Bkg_a[-1,-10,10],DelM_Bkg_b[-1,-10,10])")
+  w.factory("RooGaussian::DelM_Sig_Gaus(Del_M,DelM_Sig_Gaus_Mean[145,140,155],DelM_Sig_Gaus_Sigma[2,0,5] )")
+  w.factory("RooDstD0BG::DelM_Bkg(Del_M,DelM_Bkg_m0[139.5,139,144],DelM_Bkg_c[1,0,10],DelM_Bkg_a[-1,-10,10],DelM_Bkg_b[-1,-10,10])")
 
 
   w.factory("PROD::Sig(DelM_Sig_Gaus,D0M_Sig_Gaus)")
-  w.factory("PROD::Comb(DelM_Bkg,D0M_Bkg_Exp)")
+  w.factory("PROD::Comb(DelM_Bkg,D0M_Bkg_Poly)")
+  w.factory("PROD::MisId(DelM_Sig_Gaus,D0M_MisId_Gaus)")
   w.factory("PROD::Prompt(DelM_Bkg,D0M_Sig_Gaus)")
   
 
-  w.factory("SUM::Final_PDF(N_Sig[100,0,1000]*Sig,N_Prompt[100,0,1000]*Prompt,N_Comb[1000,0,10000]*Comb)")
+  w.factory("SUM::Final_PDF(N_Sig[50000,0,500000]*Sig,N_Prompt[5000,0,50000]*Prompt,N_Comb[50000,0,500000]*Comb,N_MisId[5000,0,50000]*MisId)")
 
 
   return w
