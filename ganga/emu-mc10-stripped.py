@@ -10,14 +10,11 @@ else:
   test = False
   evtMax = -1
 
-j = Job(name="emu-MC10-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="emu-MC10-stripped-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
-                        #optsfile="options/toms-options.py"
+                        optsfile="../wookie/options_common.py", 
                         extraopts = """
-import sys
-sys.path.append("..")
-from wookie import options_common
-options_common.execute( 
+execute( 
   stripRun = True,
   stripConf = "default",
   stripLine = "emu",

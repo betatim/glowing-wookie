@@ -514,7 +514,10 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     "Hlt2TopoOSTF3BodyDecision",
     "Hlt2TopoOSTF4BodyDecision",
     "Hlt2diphotonDiMuonDecision",
-    "Hlt2UnbiasedDiMuonLowMassDecision"
+    "Hlt2UnbiasedDiMuonLowMassDecision",
+    "Hlt2CharmHadD02HH_D02KPiWideMassDecision",
+    "Hlt2CharmHadD02HH_D02PiPiDecision",
+    "Hlt2CharmHadD02HH_D02PiPiWideMassDecision"
     ]
 
   D_variables = {"DIRA": "BPVDIRA",
