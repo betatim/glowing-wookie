@@ -10,7 +10,7 @@ else:
   test = False
   evtMax = -1
 
-j = Job(name="pipi-MC11-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="pipi-MC11-stripped-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
                         optsfile="../wookie/options_common.py", 
                         extraopts = """
@@ -31,7 +31,7 @@ j.backend = Dirac()
 dataset = j.application.readInputData("../data/pipi_%s.py"%polarity)
 
 
-n_files_per_job = len(dataset)/50. # try to have around 50 jobs
+n_files_per_job = int(len(dataset)/50.) # try to have around 50 jobs
 if n_files_per_job > 100: n_files_per_job = 100 # max 100 allowed by dirac
 
 if test:

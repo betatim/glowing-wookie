@@ -12,12 +12,9 @@ else:
 
 j = Job(name="emu-2012-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
-                        #optsfile="options/toms-options.py"
+                        optsfile="../wookie/options_common.py", 
                         extraopts = """
-import sys
-sys.path.append("..")
-from wookie import options_common
-options_common.execute( 
+execute( 
   stripRun = False,
   stripConf = "default",
   stripLine = "emu",
