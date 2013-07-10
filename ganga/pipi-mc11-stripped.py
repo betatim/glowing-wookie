@@ -5,25 +5,22 @@ else:
   sys.exit("You need to specify the magnet polarity")
 if len(sys.argv) > 2:
   test = True
-  evtMax = 1000
+  evtMax = 10000
 else:
   test = False
   evtMax = -1
 
-j = Job(name="emu-2012-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="pipi-MC11-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
-                        #optsfile="options/toms-options.py"
+                        optsfile="../wookie/options_common.py", 
                         extraopts = """
-import sys
-sys.path.append("..")
-from wookie import options_common
-options_common.execute( 
-  stripRun = False,
+execute( 
+  stripRun = True,
   stripConf = "default",
-  stripLine = "emu",
-  dataType = "data",
-  blinded = True,
-  hltReport = False,
+  stripLine = "pipi",
+  dataType = "MC11",
+  blinded = False,
+  hltReport = True,
   tupleDecay = "emu",
   evtMax = %i,
   mag = "%s")
@@ -31,7 +28,7 @@ options_common.execute(
                     )
 j.backend = Dirac()
 
-dataset = j.application.readInputData("data/stripping20r0p1_%s.py"%polarity)
+dataset = j.application.readInputData("../data/pipi_%s.py"%polarity)
 
 
 n_files_per_job = len(dataset)/50. # try to have around 50 jobs

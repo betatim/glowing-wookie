@@ -10,7 +10,7 @@ else:
   test = False
   evtMax = -1
 
-j = Job(name="emu-2012-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="emu-MC10-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
                         #optsfile="options/toms-options.py"
                         extraopts = """
@@ -18,11 +18,11 @@ import sys
 sys.path.append("..")
 from wookie import options_common
 options_common.execute( 
-  stripRun = False,
+  stripRun = True,
   stripConf = "default",
   stripLine = "emu",
-  dataType = "data",
-  blinded = True,
+  dataType = "MC10",
+  blinded = False,
   hltReport = False,
   tupleDecay = "emu",
   evtMax = %i,
@@ -31,7 +31,7 @@ options_common.execute(
                     )
 j.backend = Dirac()
 
-dataset = j.application.readInputData("data/stripping20r0p1_%s.py"%polarity)
+dataset = j.application.readInputData("data/emu_%s.py"%polarity)
 
 
 n_files_per_job = len(dataset)/50. # try to have around 50 jobs
