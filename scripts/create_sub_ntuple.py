@@ -46,6 +46,8 @@ cuts = ""
 pipiPidCut = "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && x1_ProbNNpi*x2_ProbNNpi > 0.7 && pi_ProbNNpi > 0.6 && x1_ProbNNk < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7"
 likeSignCut = "x1_ID*x2_ID>0"
 
+trigPipiCut = "( Dst_L0HadronDecision_Dec == 1 || Dst_L0MuonDecision_Dec == 1 ) && (Dst_Hlt1TrackAllL0Decision_Dec == 1) && (Dst_Hlt2Dst2PiD02PiPiDecision_Dec == 1)"
+
 directory = "/afs/cern.ch/work/t/tbird/demu/ntuples/"
 
 inPath = "Demu_NTuple/Demu_NTuple"
@@ -55,12 +57,12 @@ config = {
   'pipi': {
     'infile' : directory+"pipi/strip_pipi.root",
     'outfile': directory+"pipi/strip_pipi_fitter.root",
-    'cuts'   : combine_cuts([(pipiPidCut,True),(likeSignCut,False)]),
+    'cuts'   : combine_cuts([(trigPipiCut,True),(pipiPidCut,True),(likeSignCut,False)]),
   },
   'mcpipi': {
     'infile' : directory+"mcpipi/strip_pipi.root",
     'outfile': directory+"mcpipi/strip_pipi_fitter.root",
-    'cuts'   : combine_cuts([(pipiPidCut,True),(likeSignCut,False)]),
+    'cuts'   : combine_cuts([(trigPipiCut,True),(pipiPidCut,True),(likeSignCut,False)]),
   },
 }
   
@@ -91,7 +93,7 @@ def create_tree(config):
   
   n_before = inTree.GetEntries()
 
-  change_branch_status(inTree, ['D0_M', 'Dst_M', '*ProbNN*', "x*_ID"])
+  change_branch_status(inTree, ['D0_M', 'Dst_M', '*ProbNN*', "x*_ID", "*_Dec"])
 
   print "Applying initial cuts"
   tree = inTree.CopyTree(config['cuts'])
@@ -144,7 +146,8 @@ def create_tree(config):
   subprocess.call(["bash", "-c", "rm /tmp/tmp-asdasdasdq-omgapony.root"])
 
 
-  print "Done! Offline selection is %.2f%% efficient." %(100.*float(n_after)/float(n_before))
+  #print "Done! Offline selection is %.2f%% efficient." %(100.*float(n_after)/float(n_before)) # this isnt offline sel any more
+  print "Done!"
   sw.Stop()
   sw.Print()
 
