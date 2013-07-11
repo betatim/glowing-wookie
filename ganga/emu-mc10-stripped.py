@@ -28,18 +28,19 @@ execute(
                     )
 j.backend = Dirac()
 
-dataset = j.application.readInputData("data/emu_%s.py"%polarity)
+dataset = j.application.readInputData("../data/emu_%s.py"%polarity)
 
 
-n_files_per_job = len(dataset)/50. # try to have around 50 jobs
+n_files_per_job = int(len(dataset)/50.) # try to have around 50 jobs
 if n_files_per_job > 100: n_files_per_job = 100 # max 100 allowed by dirac
+if n_files_per_job == 0: n_files_per_job = 1 # max 100 allowed by dirac
 
 if test:
-  j.inputdata = dataset[:40]
-  n_files_per_job = 40
+  j.inputdata = dataset[:2]
+  n_files_per_job = 2
 else:
   j.inputdata = dataset
   
 j.splitter = SplitByFiles(filesPerJob=n_files_per_job)
 
-#j.submit()
+j.submit()

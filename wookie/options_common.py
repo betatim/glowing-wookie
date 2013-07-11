@@ -395,7 +395,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   from Configurables import DecayTreeTuple, TupleToolDecay, TupleToolMCTruth, TupleToolMCBackgroundInfo, MCTupleToolHierarchy, TupleToolTrigger, TupleToolTISTOS, TupleToolPropertime, PropertimeFitter, TupleToolKinematic, TupleToolGeometry, TupleToolEventInfo, TupleToolPrimaries, TupleToolPid, TupleToolTrackInfo, TupleToolRecoStats
 
   from PhysSelPython.Wrappers import Selection, SelectionSequence, DataOnDemand, AutomaticData 
-  from Configurables import LoKi__Hybrid__TupleTool, FitDecayTrees
+  from Configurables import LoKi__Hybrid__TupleTool, FitDecayTrees, TupleToolDecayTreeFitter
   import GaudiKernel.SystemOfUnits as Units
 
 
@@ -476,6 +476,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
 
 
   dttuple.TupleName = "Demu_NTuple"
+  
   dttuple.addTool(TupleToolPropertime())
   dttuple.addTool(TupleToolTISTOS())
   dttuple.TupleToolTISTOS.VerboseL0 = True
@@ -570,6 +571,10 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   LoKi_Dst.Variables = D_variables
   dttuple.Dst.addTool(LoKi_Dst)
   dttuple.Dst.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_Dst"]
+  
+  dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFit"))
+  dttuple.Dst.PVFit.Verbose = True
+  dttuple.Dst.PVFit.constrainToOriginVertex = True
 
 
   if "MC" in dataType:
