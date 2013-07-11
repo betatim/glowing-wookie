@@ -11,10 +11,24 @@ to_merge = [
     #"data" : "emu",
     #"mc"   : True
   #},
-  { # no triggers
-    "up"   : 92,
-    "down" : 91,
+  #{ # no triggers
+    #"up"   : 92,
+    #"down" : 91,
+    #"strip": "emu",
+    #"data" : "emu",
+    #"mc"   : True
+  #},
+  { # constraind D* vert + trig
+    "up"   : 186,
+    "down" : 188,
     "strip": "emu",
+    "data" : "emu",
+    "mc"   : True
+  },
+  { # constraind D* vert + trig
+    "up"   : 187,
+    "down" : 189,
+    "strip": "mcmatch",
     "data" : "emu",
     "mc"   : True
   },
@@ -39,9 +53,16 @@ to_merge = [
     "data" : "emu",
     "mc"   : True
   },
-  {
-    "up"   : 100,
-    "down" : 99,
+  #{# no triggers
+    #"up"   : 100,
+    #"down" : 99,
+    #"strip": "pipi",
+    #"data" : "pipi",
+    #"mc"   : True
+  #},
+  {  # constraind D* vert + trig
+    "up"   : 191,
+    "down" : 192,
     "strip": "pipi",
     "data" : "pipi",
     "mc"   : True
@@ -89,14 +110,14 @@ for config in to_merge:
     files.append(file_name)
     
     print "hadding %s %s %i %s" % (data_type, config['strip'], config[magnet_polarity], magnet_polarity)
-    subprocess.call("cd %s/%i/output ; hadd -f %s ../*/output/Demu_NTuple.root" % (gangadir, config[magnet_polarity], file_name_temp), shell=True)
+    subprocess.call("cd %s/%i/output ; time hadd -f %s ../*/output/Demu_NTuple.root" % (gangadir, config[magnet_polarity], file_name_temp), shell=True)
   
-    subprocess.call("cd %s ; SimpleToolsColumnMaker.exe %s %s %s %s %s ; rm %s" % (directory, file_name_temp, path, ("1" if magnet_polarity is "up" else "0"), "MagPol", file_name, file_name_temp), shell=True)
+    subprocess.call("cd %s ; time SimpleToolsColumnMaker.exe %s %s %s %s %s ; rm %s" % (directory, file_name_temp, path, ("1" if magnet_polarity is "up" else "0"), "MagPol", file_name, file_name_temp), shell=True)
     
   file_name = dir_name + "strip_%s.root" % (config['strip'])
   file_list = ""
-  for f in files: file_list += f + " " #TODO: up doesnt get deleted
-  subprocess.call("cd %s ; hadd -f %s %s ; rm %s" % (dir_name, file_name, file_list, file_list), shell=True)
+  for f in files: file_list += f + " " 
+  subprocess.call("cd %s ; time hadd -f %s %s ; rm %s" % (dir_name, file_name, file_list, file_list), shell=True)
   
 
 
