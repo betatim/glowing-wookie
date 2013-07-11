@@ -68,18 +68,25 @@ def setup_workspace():
   w.defineSet("args","D0_M,Del_M")
   w.defineSet("argsPreCut","D0_M,Del_M,RAND")
 
-  w.factory("RooGaussian::D0M_Sig_Gaus(D0_M,D0M_Sig_Gaus_Mean[1900,1800,2000],D0M_Sig_Gaus_Sigma[10,1,30])")
-  #w.factory("RooGenericPdf::D0M_Bkg_Exp('exp((D0_M-1800)*D0M_Bkg_Exp_Const)',{D0_M,D0M_Bkg_Exp_Const[-0.1,-0.00001,1]})")
-  w.factory("RooGaussian::D0M_MisId_Gaus(D0_M,D0M_MisId_Gaus_Mean[1800,1700,1820],D0M_Sig_Gaus_Sigma)")
-  #w.factory("RooExponential::D0M_Bkg_Exp(D0_M_shifted,D0M_Bkg_Exp_Const[-0.1,-0.00001,1])")
+  w.factory("RooGaussian::D0M_Sig_Gaus1(D0_M,D0M_Sig_Gaus_Mean[1865,1850,1880],D0M_Sig_Gaus_Sigma1[10,1,30])")
+  w.factory("RooGaussian::D0M_Sig_Gaus2(D0_M,D0M_Sig_Gaus_Mean,D0M_Sig_Gaus_Sigma2[3,1,30])")
+  w.factory("SUM::D0M_Sig_Gaus(D0M_Sig_Gaus1_Frac[0.8,0,1]*D0M_Sig_Gaus1,D0M_Sig_Gaus2)")
+  
+  
+  w.factory("RooGaussian::D0M_MisId_Gaus1(D0_M,D0M_MisId_Gaus_Mean[1800,1740,1820],D0M_Sig_Gaus_Sigma1)")
+  w.factory("RooGaussian::D0M_MisId_Gaus2(D0_M,D0M_MisId_Gaus_Mean,D0M_Sig_Gaus_Sigma2)")
+  w.factory("SUM::D0M_MisId_Gaus(D0M_Sig_Gaus1_Frac*D0M_MisId_Gaus1,D0M_MisId_Gaus2)")
+  
+  
   w.factory("RooChebychev::D0M_Bkg_Poly(D0_M,{D0M_Bkg_Poly_a1[0,-1,1]})")
-  #w.factory("SUM::D0M_Bkg(D0M_Bkg_Exp_Frac[0.3,0,1]*D0M_Bkg_Exp,D0M_Bkg_Poly)")
   
 
 
-  w.factory("RooGaussian::DelM_Sig_Gaus(Del_M,DelM_Sig_Gaus_Mean[145,140,155],DelM_Sig_Gaus_Sigma[2,0,5] )")
-  w.factory("RooDstD0BG::DelM_Bkg(Del_M,DelM_Bkg_m0[139.5,139,144],DelM_Bkg_c[1,0,10],DelM_Bkg_a[-1,-10,10],DelM_Bkg_b[-1,-10,10])")
+  w.factory("RooGaussian::DelM_Sig_Gaus1(Del_M,DelM_Sig_Gaus_Mean[145,140,155],DelM_Sig_Gaus_Sigma1[1,0,2] )")
+  w.factory("RooGaussian::DelM_Sig_Gaus2(Del_M,DelM_Sig_Gaus_Mean,DelM_Sig_Gaus_Sigma2[.1,0,2] )")
+  w.factory("SUM::DelM_Sig_Gaus(DelM_Sig_Gaus1_Frac[0.8,0,1]*DelM_Sig_Gaus1,DelM_Sig_Gaus2)")
 
+  w.factory("RooDstD0BG::DelM_Bkg(Del_M,DelM_Bkg_m0[139.5,130,144],DelM_Bkg_c[1,0,100],DelM_Bkg_a[-1,-100,10],DelM_Bkg_b[-1,-10,10])")
 
   w.factory("PROD::Sig(DelM_Sig_Gaus,D0M_Sig_Gaus)")
   w.factory("PROD::Comb(DelM_Bkg,D0M_Bkg_Poly)")
