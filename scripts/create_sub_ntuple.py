@@ -57,6 +57,11 @@ config = {
     'outfile': directory+"pipi/strip_pipi_fitter.root",
     'cuts'   : combine_cuts([(pipiPidCut,True),(likeSignCut,False)]),
   },
+  'mcpipi': {
+    'infile' : directory+"mcpipi/strip_pipi.root",
+    'outfile': directory+"mcpipi/strip_pipi_fitter.root",
+    'cuts'   : combine_cuts([(pipiPidCut,True),(likeSignCut,False)]),
+  },
 }
   
   
@@ -83,6 +88,8 @@ def create_tree(config):
 
   inTree = inFile.Get(inPath)
   inTree.Write()
+  
+  n_before = inTree.GetEntries()
 
   change_branch_status(inTree, ['D0_M', 'Dst_M', '*ProbNN*', "x*_ID"])
 
@@ -126,6 +133,8 @@ def create_tree(config):
   outFile = TFile(config['outfile'],"RECREATE")
   outFile.cd()
   outTree = tree.CloneTree(-1)
+  
+  n_after = outTree.GetEntries()
 
   print "Writing to", config['outfile']
   outTree.Write()
@@ -135,7 +144,7 @@ def create_tree(config):
   subprocess.call(["bash", "-c", "rm /tmp/tmp-asdasdasdq-omgapony.root"])
 
 
-  print "Done!"
+  print "Done! Offline selection is %.2f%% efficient." %(100.*float(n_after)/float(n_before))
   sw.Stop()
   sw.Print()
 
