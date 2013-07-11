@@ -632,7 +632,7 @@ def gofCalcL(queue,gof,radius):
   queue.put(gof.calculateL(radius))
 
 gofPlot = False
-if doGof:
+if config['doGof']:
   print "Starting gof calculation"
 
 
