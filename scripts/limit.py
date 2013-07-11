@@ -5,8 +5,11 @@ from ROOT import TFeldmanCousins, TRolke
 
 
 br_pipi = 1.401e-3
-e_pipi = 1.8e-2 * .3 *.3
+
+#        strip e|st pre|hlt2 p|  tr e  |  off e
+e_pipi = 1.8e-2 * 0.5 * 0.03 * 15.44e-2 * 63.17e-2
 br_exp_emu = 1e-14
+#       strip e|tr e
 e_emu = 3.1e-2 * 38.53e-2
 
 n_tot_pipi = 15102431. # (down)
