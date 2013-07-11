@@ -771,7 +771,7 @@ timers["total"].Stop()
 if config['doFit'] or config['loadFit']:
   if r:
     printSetVarLimits(w)
-    printTexRes()
+    printTexRes(r)
     checkVarLimits(w)
     print "Minimum value of NLL:", r.minNll()
     r.Print()

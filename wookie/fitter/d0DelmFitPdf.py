@@ -82,11 +82,11 @@ def setup_workspace():
   
 
 
-  w.factory("RooGaussian::DelM_Sig_Gaus1(Del_M,DelM_Sig_Gaus_Mean[145,140,155],DelM_Sig_Gaus_Sigma1[1,0,2] )")
+  w.factory("RooGaussian::DelM_Sig_Gaus1(Del_M,DelM_Sig_Gaus_Mean[145.5,143,148],DelM_Sig_Gaus_Sigma1[1,0,5] )")
   w.factory("RooGaussian::DelM_Sig_Gaus2(Del_M,DelM_Sig_Gaus_Mean,DelM_Sig_Gaus_Sigma2[.1,0,2] )")
   w.factory("SUM::DelM_Sig_Gaus(DelM_Sig_Gaus1_Frac[0.8,0,1]*DelM_Sig_Gaus1,DelM_Sig_Gaus2)")
 
-  w.factory("RooDstD0BG::DelM_Bkg(Del_M,DelM_Bkg_m0[139.5,130,144],DelM_Bkg_c[1,0,100],DelM_Bkg_a[-1,-100,10],DelM_Bkg_b[-1,-10,10])")
+  w.factory("RooDstD0BG::DelM_Bkg(Del_M,DelM_Bkg_m0[139.5,134,144],DelM_Bkg_c[80,0,1000],DelM_Bkg_a[-1,-100,10],DelM_Bkg_b[0.2,-0.2,10])")
 
   w.factory("PROD::Sig(DelM_Sig_Gaus,D0M_Sig_Gaus)")
   w.factory("PROD::Comb(DelM_Bkg,D0M_Bkg_Poly)")
@@ -94,7 +94,7 @@ def setup_workspace():
   w.factory("PROD::Prompt(DelM_Bkg,D0M_Sig_Gaus)")
   
 
-  w.factory("SUM::Final_PDF(N_Sig[50000,0,500000]*Sig,N_Prompt[5000,0,50000]*Prompt,N_Comb[50000,0,500000]*Comb,N_MisId[5000,0,50000]*MisId)")
+  w.factory("SUM::Final_PDF(N_Sig[10000,0,50000]*Sig,N_Prompt[5000,0,20000]*Prompt,N_Comb[10000,0,50000]*Comb,N_MisId[500,0,5000]*MisId)")
 
 
   return w
