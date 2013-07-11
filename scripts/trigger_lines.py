@@ -7,8 +7,12 @@ from ROOT import TFile, gROOT, TH1D, TCanvas
 
 gROOT.ProcessLine(".x lhcbstyle.C")
 
-tf = TFile("/afs/cern.ch/work/t/tbird/demu/ntuples/mcemu/strip_emu_tim.root")
+tf = TFile("/afs/cern.ch/work/t/tbird/demu/ntuples/mcpipi/strip_pipi.root")
 ttree = tf.Get("Demu_NTuple/Demu_NTuple")
+
+pipiPidCut = "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && x1_ProbNNpi*x2_ProbNNpi > 0.7 && pi_ProbNNpi > 0.6 && x1_ProbNNk < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7"
+
+offline_cuts = pipiPidCut
 
 lines_per_level = 2
 
@@ -76,9 +80,9 @@ def find_most_useful(all_lines,best_lines,given_lines = None):
     tmp_lines = [line]
     if not best_lines == []: tmp_lines += best_lines 
     if given_lines == None:
-      tmp_lines = [tmp_lines]
+      tmp_lines = [tmp_lines] + [offline_cuts]
     else:
-      tmp_lines = [tmp_lines] + given_lines 
+      tmp_lines = [tmp_lines] + given_lines + [offline_cuts]
     #print tmp_lines
     passed = calc_eff(tmp_lines)
     if passed > best_line_value:
@@ -90,7 +94,7 @@ def find_most_useful(all_lines,best_lines,given_lines = None):
 
 
 
-l0_tot = float(ttree.GetEntries())
+l0_tot = calc_eff([offline_cuts])
 
 l0_hist = TH1D("l0_hist","l0_hist;;Efficency",10,0,10)
 l0_hist.SetBit(TH1D.kCanRebin)
@@ -120,7 +124,7 @@ hlt1_tc = TCanvas("hlt1_tc","hlt1_tc",800,600)
 hlt1_tc.SetBottomMargin(0.2)
 hlt1_tc.SetRightMargin(0.2)
 
-hlt1_tot = calc_eff([l0_lines_for_hlt1])
+hlt1_tot = calc_eff([offline_cuts,l0_lines_for_hlt1])
 
 hlt1_hist = TH1D("hlt1_hist","hlt1_hist;;Efficency",10,0,10)
 hlt1_hist.SetBit(TH1D.kCanRebin)
@@ -150,7 +154,7 @@ hlt2_tc = TCanvas("hlt2_tc","hlt2_tc",800,600)
 hlt2_tc.SetBottomMargin(0.2)
 hlt2_tc.SetRightMargin(0.2)
 
-hlt2_tot = calc_eff([hlt1_lines_for_hlt2,l0_lines_for_hlt1])
+hlt2_tot = calc_eff([offline_cuts,hlt1_lines_for_hlt2,l0_lines_for_hlt1])
 
 hlt2_hist = TH1D("hlt2_hist","hlt2_hist;;Efficency",10,0,10)
 hlt2_hist.SetBit(TH1D.kCanRebin)
