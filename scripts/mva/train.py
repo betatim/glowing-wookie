@@ -4,6 +4,7 @@ import random
 import ROOT as R
 from ROOT import TMVA
 
+from wookie import config
 
 random.seed(1234)
 
@@ -65,15 +66,15 @@ def add_variables(factory, variables, spectators):
 
 
 if __name__ == "__main__":
-    f_sig = R.TFile("/tmp/emu-mc-magdown.root")
+    f_sig = R.TFile(config.path + "/mcemu/strip_emu.root")
     tree_sig = f_sig.Demu_NTuple.Get("Demu_NTuple")
-    f_bg = R.TFile("/tmp/emu-data-magup.root")
+    f_bg = R.TFile(config.path + "/emu/strip_emu.root")
     tree_bg = f_bg.Demu_NTuple.Get("Demu_NTuple")
 
     tree_sig.SetBranchStatus("*", False)
     tree_bg.SetBranchStatus("*", False)
     
-    fname = "/tmp/d2emu-tmva.root"
+    fname = config.path + "/d2emu-tmva.root"
     out_file = R.TFile(fname, "RECREATE")
     
     factory = TMVA.Factory("d2emu", out_file, "!Color")
