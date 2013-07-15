@@ -382,6 +382,15 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     elif mag == "down":
       DaVinci().CondDBtag = "sim-20111111-vc-md100"
     DaVinci().Lumi = False
+  elif dataType == "MC11a":
+    DaVinci().DataType = "2011"
+    DaVinci().Simulation = True
+    DaVinci().DDDBtag = "MC11-20111102"
+    if mag == "up":
+      DaVinci().CondDBtag = "sim-20111111-vc-mu100"
+    elif mag == "down":
+      DaVinci().CondDBtag = "sim-20111111-vc-md100"
+    DaVinci().Lumi = False
   elif dataType == "data":
     DaVinci().DataType = "2012"
     DaVinci().Simulation = False
