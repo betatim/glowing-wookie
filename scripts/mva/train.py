@@ -154,6 +154,8 @@ if __name__ == "__main__":
                   variables,
                   spectators)
 
+    selector = PIDSelection(pid_mu=-1., pid_e=0.)
+    
     Nmax = 16000
     add_events(factory, tree_sig, variables + spectators, Nmax=Nmax)
     add_events(factory, tree_bg, variables + spectators,
