@@ -11,16 +11,16 @@ else:
   test = False
   evtMax = -1
 
-j = Job(name="emu-2012-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="D_Ksmunu-MC11a-emustripped-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
                         optsfile="../wookie/options_common.py", 
                         extraopts = """
 execute( 
-  stripRun = False,
+  stripRun = True,
   stripConf = "default",
   stripLine = "emu",
-  dataType = "data",
-  blinded = True,
+  dataType = "MC10",
+  blinded = False,
   hltReport = False,
   tupleDecay = "emu",
   evtMax = %i,
@@ -29,7 +29,7 @@ execute(
                     )
 j.backend = Dirac()
 
-dataset = j.application.readInputData("../data/stripping20r0p1_%s.py"%polarity)
+dataset = j.application.readInputData("../data/D_Ksmunu_%s.py"%polarity)
 
 
 n_files_per_job = int(len(dataset)/50.) # try to have around 50 jobs
@@ -37,8 +37,8 @@ if n_files_per_job > 100: n_files_per_job = 100 # max 100 allowed by dirac
 if n_files_per_job == 0: n_files_per_job = 1 # one file at least
 
 if test:
-  j.inputdata = dataset[:40]
-  n_files_per_job = 40
+  j.inputdata = dataset[:2]
+  n_files_per_job = 2
 else:
   j.inputdata = dataset
   
