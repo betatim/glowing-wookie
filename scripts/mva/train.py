@@ -14,7 +14,7 @@ class V(object):
         self.branch = branch
         self.name = safe_varname(branch)
 
-    def enable_vars(self, tree):
+    def enable(self, tree):
         tree.SetBranchStatus(self.branch, True)
 
     def __call__(self, evt):
@@ -28,47 +28,14 @@ class DeltaV(object):
         self.branch2 = branch2
         self.name = safe_varname(branch1) +"_minus_"+safe_varname(branch2)
 
-    def enable_vars(self, tree):
+    def enable(self, tree):
         for br in (self.branch1, self.branch2):
             tree.SetBranchStatus(br, True)
 
     def __call__(self, evt):
         return getattr(evt, self.branch1) - getattr(evt, self.branch2)
 
-
-class PIDSelection(object):
-    def __init__(self, pid_mu, pid_e):
-        self.pid_e = pid_e
-        self.pid_mu = pid_mu
-        # Stick to DLL variables for the moment
-        # not sure Tim understands the shape of ProbNNmu
-        self._branches = ["x2_isMuon", "x2_PIDmu", "x1_PIDe"]
-        self._Ntotal = 0
-        self._Npassed = 0
-
-    def reset_counters(self):
-        self._Ntotal = self._Npassed = 0
         
-    @property
-    def efficiency(self):
-        return self._Npassed, self._Ntotal
-
-    def enable_vars(self, tree):
-        for br in self._branches:
-            tree.SetBranchStatus(br, True)
-
-    def __call__(self, evt):
-        self._Ntotal += 1
-
-        if (evt.x2_isMuon and
-            evt.x1_PIDe > self.pid_e and
-            evt.x2_PIDmu > self.pid_mu):
-            self._Npassed += 1
-            return True
-
-        return False
-
-
 def safe_varname(varname):
     """Remove characters which make TMVA think a variable is a
     formula and replace by underscores
@@ -77,15 +44,7 @@ def safe_varname(varname):
     translation = string.maketrans(bad_chars, "_"*len(bad_chars))
     return varname.translate(translation)
     
-def add_events(factory, tree, variables,
-               select, signal=True,
-               Nmax=16000):
-    """Add training/testing events to TMVA
-
-    Only events for which `select` returns True
-    will be used. Will keep adding events until
-    we reach `Nmax` have been accepted.
-    """
+def add_events(factory, tree, variables, signal=True, Nmax=10000):
     if signal:
         add_train_evt = factory.AddSignalTrainingEvent
         add_test_evt = factory.AddSignalTestEvent
@@ -94,27 +53,20 @@ def add_events(factory, tree, variables,
         add_train_evt = factory.AddBackgroundTrainingEvent
         add_test_evt = factory.AddBackgroundTestEvent
 
-    select.enable_vars(tree)
     for var in variables:
-        var.enable_vars(tree)
+        var.enable(tree)
         
     is_training = (True, False)
     vals = R.std.vector(R.Double)()
-
-    Nselected = 0
+    
     for N,evt in enumerate(tree):
-        if Nselected > Nmax:
-            print Nselected, Nmax
+        if N > Nmax:
             break
-
-        if not select(evt):
-            continue
             
         vals.clear()
         for v in variables:
             vals.push_back(v(evt))
 
-        Nselected += 1
         if random.choice(is_training):
             add_train_evt(vals, 1.)
         else:
@@ -202,20 +154,11 @@ if __name__ == "__main__":
                   variables,
                   spectators)
 
-    selector = PIDSelection(pid_mu=0., pid_e=0.)
-    
     Nmax = 16000
-    add_events(factory, tree_sig, variables + spectators,
-               selector, Nmax=Nmax)
-    Np, Nt = selector.efficiency
-    print "Signal efficiency of PID cuts %i/%i = %.5f"%(Np, Nt, Np/float(Nt))
-    selector.reset_counters()
-    
+    add_events(factory, tree_sig, variables + spectators, Nmax=Nmax)
     add_events(factory, tree_bg, variables + spectators,
-               selector, signal=False, Nmax=Nmax)
-    Np, Nt = selector.efficiency
-    print "Background efficiency of PID cuts %i/%i = %.5f"%(Np, Nt, Np/float(Nt))
-    
+               signal=False, Nmax=Nmax)
+
     options = "NormMode=None"
     factory.PrepareTrainingAndTestTree(R.TCut(""), R.TCut(""),
                                        options)
