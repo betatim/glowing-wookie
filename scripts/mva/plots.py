@@ -24,6 +24,7 @@ def draw_all(test, train):
         ax = fig.add_subplot(221)
 
         low = min(test[field].min(), train[field].min())
+        #low = max(low, -150)
         high = max(test[field].max(), train[field].max())
 
         ax.set_title("S vs B")
@@ -42,6 +43,23 @@ def draw_all(test, train):
                 alpha=0.5)
         ax.legend()
 
+        ax = fig.add_subplot(223)
+        ax.set_xlabel(field)
+        ax.hist(train_bg[field],
+                bins=50,
+                normed=True,
+                range=(low,high),
+                label="train bg",
+                alpha=0.5,
+                log=True)
+        ax.hist(train_sig[field],
+                bins=50,
+                normed=True,
+                range=(low,high),
+                label="train sig",
+                alpha=0.5,
+                log=True)
+        
         ax = fig.add_subplot(222)
         ax.set_title("test vs train S")
         ax.hist(train_sig[field],

@@ -19,6 +19,21 @@ class V(object):
     def __call__(self, evt):
         return getattr(evt, self.branch)
 
+
+class DeltaV(object):
+    def __init__(self, branch1, branch2):
+        """Computes `branch1` - `branch2`."""
+        self.branch1 = branch1
+        self.branch2 = branch2
+        self.name = safe_varname(branch1) +"_minus_"+safe_varname(branch2)
+
+    def enable(self, tree):
+        for br in (self.branch1, self.branch2):
+            tree.SetBranchStatus(br, True)
+
+    def __call__(self, evt):
+        return getattr(evt, self.branch1) - getattr(evt, self.branch2)
+
         
 def safe_varname(varname):
     """Remove characters which make TMVA think a variable is a
@@ -79,20 +94,20 @@ if __name__ == "__main__":
     factory = TMVA.Factory("d2emu", out_file, "!Color")
 
     variables = [V("D0_CosTheta"),
-                 #V("D0_DOCA"),
-                 V("D0_DIRA"),
+                 V("D0_DOCA"),
+                 #V("D0_DIRA"),
                  ##V("D0_DIRA_ORIVX"),
                  ##V("D0_DIRA_OWNPV"),
                  V("D0_VChi2_per_NDOF"),
                  V("D0_MinIP_PRIMARY"),
                  V("D0_IP_OWNPV"),
-                 ##V("D0_FD_ORIVX"),
+                 V("D0_FD_ORIVX"),
                  V("D0_FD_OWNPV"),
-                 ##V("Dst_DOCA"),
-                 ##V("Dst_DIRA"),
+                 V("Dst_DOCA"),
+                 V("Dst_DIRA"),
                  ##V("Dst_DIRA_OWNPV"),
                  V("Dst_VChi2_per_NDOF"),
-                 ##V("Dst_MinIP_PRIMARY"),
+                 V("Dst_MinIP_PRIMARY"),
                  ##V("Dst_IP_OWNPV"),
                  ##V("Dst_FD_OWNPV"),
                  V("x1_IP_OWNPV"),
@@ -106,11 +121,31 @@ if __name__ == "__main__":
                  V("x1_TRACK_MatchCHI2"),
                  V("x2_TRACK_MatchCHI2"),
              ]
-    spectators = [#V("D0_MinIPChi2_PRIMARY"),
+    spectators = [V("D0_MinIPChi2_PRIMARY"),
                   V("D0_IPChi2"),
                   V("D0_MM"),
                   V("Dst_MM"),
-                  #V("x1_BremMultiplicity"),
+                  V("pi_ProbNNmu"),
+                  V("pi_ProbNNpi"),
+                  V("x1_BremMultiplicity"),
+                  V("x1_ProbNNe"),
+                  V("x1_ProbNNmu"),
+                  V("x1_ProbNNghost"),
+                  V("x1_PIDe"),
+                  V("x1_PIDmu"),
+                  V("x1_PIDK"),
+                  V("x1_isMuon"),
+                  V("x1_cp_0.50"),
+                  V("x1_cmult_0.50"),
+                  V("x2_ProbNNe"),
+                  V("x2_ProbNNmu"),
+                  V("x2_ProbNNghost"),
+                  V("x2_PIDe"),
+                  V("x2_PIDmu"),
+                  V("x2_PIDK"),
+                  V("x2_cp_0.50"),
+                  V("x2_cmult_0.50"),
+                  DeltaV("Dst_MM", "D0_MM"),
               ]
     
     
@@ -126,15 +161,17 @@ if __name__ == "__main__":
     options = "NormMode=None"
     factory.PrepareTrainingAndTestTree(R.TCut(""), R.TCut(""),
                                        options)
-    bdt_options = ("NTrees=%i:UseRandomisedTrees=True:MaxDepth=%i:"
-                   "PruneMethod=NoPruning:UseNvars=%i:nCuts=-1")
+    #bdt_options = ("NTrees=%i:UseRandomisedTrees=True:MaxDepth=%i:"
+    #               "PruneMethod=NoPruning:UseNvars=%i:nCuts=-1")
     #bdt_options = bdt_options%(3)
-    import itertools
-    for trees,depth in itertools.product((1,2,3,4,5,6,7,8,9,10,20,40),
-                                         (3,5,8)):
-        factory.BookMethod(TMVA.Types.kBDT, "BDT_%i_%i"%(trees,depth),
-                           bdt_options%(trees, depth, len(variables)/2))
+    #import itertools
+    #for trees,depth in itertools.product((1,2,3,4,5,6,7,8,9,10,20,40),
+    #                                     (3,5,8)):
+    #    factory.BookMethod(TMVA.Types.kBDT, "BDT_%i_%i"%(trees,depth),
+    #                       bdt_options%(trees, depth, len(variables)/2))
 
+    # For the moment ADA boost seems to perform as well
+    # as all the others and does well in terms of overtraining
     factory.BookMethod(TMVA.Types.kBDT, "BDT_ada",
                        "BoostType=AdaBoost:nCuts=-1:MaxDepth=3:"
                        "PruneMethod=NoPruning")
