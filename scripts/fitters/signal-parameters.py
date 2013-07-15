@@ -1,5 +1,7 @@
 import ROOT as R
 from ROOT import RooFit as RF
+from wookie import config
+
 
 R.RooRandom.randomGenerator().SetSeed(54321)
 
@@ -16,7 +18,7 @@ w.defineSet("dataset_args", "D0_MM,BDT_ada,classID")
 
 w.factory("BDT_region[Cat1,Cat2,Cat3]")
 
-f_input = R.TFile("/tmp/d2emu-tmva.root")
+f_input = R.TFile(config.path + "/d2emu-tmva.root")
 tree = f_input.TestTree
 # Need to create three datasets from the tree
 # then create one big one from them with
@@ -73,9 +75,9 @@ pdf.fitTo(dataset,
           R.RooFit.Minimizer("Minuit2", "Migrad"),
           R.RooFit.NumCPU(1))
 
-plot1 = D0_MM.frame(R.RooFit.Title("Channel 1"))
-plot2 = D0_MM.frame(R.RooFit.Title("Channel 2"))
-plot3 = D0_MM.frame(R.RooFit.Title("Channel 3"))
+plot1 = D0_MM.frame(R.RooFit.Title("Channel 1"), R.RooFit.Name("channel1"))
+plot2 = D0_MM.frame(R.RooFit.Title("Channel 2"), R.RooFit.Name("channel2"))
+plot3 = D0_MM.frame(R.RooFit.Title("Channel 3"), R.RooFit.Name("channel3"))
 dataset.plotOn(plot1, R.RooFit.Cut("BDT_region==BDT_region::Cat1"))
 pdf.plotOn(plot1,
            R.RooFit.ProjWData(dataset),
@@ -91,8 +93,10 @@ pdf.plotOn(plot3,
            R.RooFit.ProjWData(dataset),
            R.RooFit.Slice(w.cat("BDT_region"), "Cat3"))
 
-c = R.TCanvas()
+#c = R.TCanvas()
+tf = R.TFile(config.plotspath + "/emufit.root", "RECREATE")
 for p in (plot1,plot2,plot3):
-    p.Draw()
+    p.Write()
+    #p.Draw()
     raw_input("next?")
-
+tf.Close()
