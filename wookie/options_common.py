@@ -134,7 +134,7 @@ def local_line(config, xplus = "e", xminus = "mu"):
 
 
 def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleDecay, evtMax, mag):
-
+  
   #0 "pi" "pi"
   #1 "mu" "mu"
   #2 "K"  "pi"
@@ -591,9 +591,9 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     dttuple.TupleToolMCBackgroundInfo.Verbose=True
     dttuple.addTool(TupleToolMCTruth, name="truth")
     dttuple.truth.ToolList += ["MCTupleToolHierarchy",
-                              "TupleToolMCBackgroundInfo/TupleToolMCBackgroundInfo",
-                              "TupleToolMCTruth/truth",
-                              "MCTupleToolKinematic"]
+                               "MCTupleToolKinematic"]
+    dttuple.ToolList+=["TupleToolMCBackgroundInfo/TupleToolMCBackgroundInfo"]
+    dttuple.ToolList+=["TupleToolMCTruth/truth"]
 
   #from Configurables import DaVinci, PrintDecayTree, GaudiSequencer
   #from Configurables import LoKi__HDRFilter
