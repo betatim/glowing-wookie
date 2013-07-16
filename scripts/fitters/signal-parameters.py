@@ -27,17 +27,17 @@ dataset1 = R.RooDataSet("MVATestDataSet1",
                         "MVATestDataSet1",
                         tree,
                         w.set("dataset_args"),
-                        "classID==0 && BDT_ada<0.3")
+                        "classID==0 && BDT_ada<0.")
 dataset2 = R.RooDataSet("MVATestDataSet2",
                         "MVATestDataSet2",
                         tree,
                         w.set("dataset_args"),
-                        "classID==0 && BDT_ada>0.0 && BDT_ada<0.3")
+                        "classID==0 && BDT_ada>0.0 && BDT_ada<0.08")
 dataset3 = R.RooDataSet("MVATestDataSet3",
                         "MVATestDataSet3",
                         tree,
                         w.set("dataset_args"),
-                        "classID==0 && BDT_ada>0.3")
+                        "classID==0 && BDT_ada>0.08")
 dataset = R.RooDataSet("MVATestDataSet",
                        "MVATestDataSet",
                        w.set("dataset_args"),
@@ -51,7 +51,7 @@ w_import(dataset)
 for n in (1,2,3):
     # attempt at a double CB, there must be a better way
     # shared mean and sigma, different alpha and n
-    w.factory("CBShape:signalleft%(n)i(D0_MM, D_mean%(n)i[2000,0,10000], D_sigma%(n)i[10,0,200], D_alphaleft%(n)i[0.5,0,5], D_nleft%(n)i[2,0,10])"%({"n":n}))
+    w.factory("CBShape:signalleft%(n)i(D0_MM, D_mean%(n)i[1850,1750,1900], D_sigma%(n)i[10,2,20], D_alphaleft%(n)i[0.5,0,5], D_nleft%(n)i[2,0,10])"%({"n":n}))
     w.factory("CBShape:signalright%(n)i(D0_MM, D_mean%(n)i, D_sigma%(n)i, D_alpharight%(n)i[-0.5,-5,0], D_nright%(n)i[2,0,10])"%({"n":n}))
     w.factory("SUM:model%(n)i(nsigleft%(n)i[0,8000]*signalleft%(n)i, nsigright%(n)i[0,8000]*signalright%(n)i)"%({"n":n}))
 
@@ -72,7 +72,7 @@ pdf = w.pdf("jointModel")
 
 pdf.fitTo(dataset,
           R.RooFit.Save(True),
-          R.RooFit.Minimizer("Minuit2", "Migrad"),
+          #R.RooFit.Minimizer("Minuit2", "Migrad"),
           R.RooFit.NumCPU(1))
 
 plot1 = D0_MM.frame(R.RooFit.Title("Channel 1"), R.RooFit.Name("channel1"))
@@ -98,5 +98,5 @@ tf = R.TFile(config.plotspath + "/emufit.root", "RECREATE")
 for p in (plot1,plot2,plot3):
     p.Write()
     #p.Draw()
-    raw_input("next?")
+    #raw_input("next?")
 tf.Close()
