@@ -1,6 +1,7 @@
 import ROOT as R
 from ROOT import RooFit as RF
 from wookie import config
+from wookie.fitter.variableUtils import printSetVarLimits, printTexRes, checkVarLimits
 
 
 R.RooRandom.randomGenerator().SetSeed(54321)
@@ -52,8 +53,8 @@ for n in (1,2,3):
     # attempt at a double CB, there must be a better way
     # shared mean and sigma, different alpha and n
     w.factory("CBShape:signalleft%(n)i(D0_MM, D_mean%(n)i[1850,1750,1900], D_sigma%(n)i[10,2,20], D_alphaleft%(n)i[0.5,0,5], D_nleft%(n)i[2,0,10])"%({"n":n}))
-    w.factory("CBShape:signalright%(n)i(D0_MM, D_mean%(n)i, D_sigma%(n)i, D_alpharight%(n)i[-0.5,-5,0], D_nright%(n)i[2,0,10])"%({"n":n}))
-    w.factory("SUM:model%(n)i(nsigleft%(n)i[0,8000]*signalleft%(n)i, nsigright%(n)i[0,8000]*signalright%(n)i)"%({"n":n}))
+    w.factory("CBShape:signalright%(n)i(D0_MM, D_mean%(n)i, D_sigma%(n)i, D_alpharight%(n)i[-0.5,-5,0], D_nright%(n)i[5,0,50])"%({"n":n}))
+    w.factory("SUM:model%(n)i(fsigright%(n)i[0,1]*signalright%(n)i,signalleft%(n)i)"%({"n":n}))
 
 #w.factory('Exponential::bg1(DM,abg1[-0.5,-2.5,0])')
 #w.factory('Exponential::bg2(DM,abg2[-0.5,-2.5,0])')
@@ -67,13 +68,12 @@ for n in (1,2,3):
 
 
 # Model which combines the two channels
-w.factory("SIMUL:jointModel(BDT_region,Cat1=model1,Cat2=model2,Cat3=model3)")
-pdf = w.pdf("jointModel")
+pdf = w.factory("SIMUL:Final_PDF(BDT_region,Cat1=model1,Cat2=model2,Cat3=model3)")
 
-pdf.fitTo(dataset,
-          R.RooFit.Save(True),
-          #R.RooFit.Minimizer("Minuit2", "Migrad"),
-          R.RooFit.NumCPU(1))
+r = pdf.fitTo(dataset,
+            R.RooFit.Save(True),
+            R.RooFit.Minimizer("Minuit2", "Migrad"),
+            R.RooFit.NumCPU(1))
 
 plot1 = D0_MM.frame(R.RooFit.Title("Channel 1"), R.RooFit.Name("channel1"))
 plot2 = D0_MM.frame(R.RooFit.Title("Channel 2"), R.RooFit.Name("channel2"))
@@ -100,3 +100,10 @@ for p in (plot1,plot2,plot3):
     #p.Draw()
     #raw_input("next?")
 tf.Close()
+
+
+printSetVarLimits(w)
+printTexRes(r)
+checkVarLimits(w)
+print "Minimum value of NLL:", r.minNll()
+r.Print()

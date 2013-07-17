@@ -1,7 +1,7 @@
 import ROOT as R
 from ROOT import RooFit as RF
 from wookie import config
-
+from wookie.fitter.variableUtils import printSetVarLimits, printTexRes, checkVarLimits
 
 R.RooRandom.randomGenerator().SetSeed(54321)
 
@@ -63,13 +63,12 @@ for n in (1,2,3):
 
 
 # Model which combines the two channels
-w.factory("SIMUL:jointModel(BDT_region,Cat1=model1,Cat2=model2,Cat3=model3)")
-pdf = w.pdf("jointModel")
+pdf = w.factory("SIMUL:Final_PDF(BDT_region,Cat1=model1,Cat2=model2,Cat3=model3)")
 
-pdf.fitTo(dataset,
-          R.RooFit.Save(True),
-          R.RooFit.Minimizer("Minuit2", "Migrad"),
-          R.RooFit.NumCPU(1))
+r = pdf.fitTo(dataset,
+              R.RooFit.Save(True),
+              R.RooFit.Minimizer("Minuit2", "Migrad"),
+              R.RooFit.NumCPU(1))
 
 plot1 = D0_MM.frame(R.RooFit.Title("Channel 1"), R.RooFit.Name("channel1"))
 plot2 = D0_MM.frame(R.RooFit.Title("Channel 2"), R.RooFit.Name("channel2"))
@@ -96,3 +95,9 @@ for p in (plot1,plot2,plot3):
     #p.Draw()
     #raw_input("next?")
 tf.Close()
+
+printSetVarLimits(w)
+printTexRes(r)
+checkVarLimits(w)
+print "Minimum value of NLL:", r.minNll()
+r.Print()
