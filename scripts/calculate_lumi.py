@@ -23,5 +23,5 @@ for data_file in lumi_tuple:
   le = data_file.IntegratedLuminosityErr
   lumi_err +=  le * le
   
-print "Total:", lumi_tot, "+/-", sqrt(lumi_err),"nb"
+print "Total:", lumi_tot, "+/-", sqrt(lumi_err),"pb"
 
