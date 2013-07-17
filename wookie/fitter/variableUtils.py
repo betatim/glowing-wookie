@@ -159,7 +159,7 @@ def printSetVarLimits(w):
       continue
     if var.isConstant():
       continue
-    print "w.obj('"+var.GetName()+"').setMin("+str(var.getMin())+") ; w.obj('"+var.GetName()+"').setMax("+str(var.getMax())+")\nw.obj('"+var.GetName()+"').setVal("+str(var.getVal())+") ; w.obj('"+var.GetName()+"').setError("+str(var.getError())+") "
+    print "w.obj('"+var.GetName()+"').setMin("+str(var.getMin())+") ; w.obj('"+var.GetName()+"').setMax("+str(var.getMax())+")\nw.obj('"+var.GetName()+"').setVal("+str(var.getVal())+") ; w.obj('"+var.GetName()+"').setError("+str(var.getError())+")\nw.obj('"+var.GetName()+"').setConstant("+ ("True" if var.isConstant() else "False") +")"
   print ""
 
 def checkTitles(w):
