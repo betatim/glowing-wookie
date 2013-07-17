@@ -26,7 +26,7 @@ w1.factory("SUM::model1(nsig1*signal,nbg1[1000,0,10000]*bg1)")
 # Channel Two has a background that falls exponentially
 # 20 signal events on a background of 100
 w1.factory('Exponential::bg2(x,abg2[-0.25,-2.5,0])')
-w1.factory("prod:nsig2(mu,xsec2[20])")
+w1.factory("prod:nsig2(mu,xsec2[18])")
 
 w1.factory("SUM::model2(nsig2*signal,nbg2[100,0,10000]*bg2)")
 
@@ -40,6 +40,8 @@ x = w1.var("x")
 index = w1.var("index")
 
 # Our data from the "detector"
+# let's pretend there is no signal
+w1.var("mu").setVal(0.0)
 data = pdf.generate(R.RooArgSet(x, R.w1.index))
 data.SetName("data")
 w1_import(data)
@@ -85,6 +87,7 @@ plot1.Draw()
 c.cd(2)
 plot2.Draw()
 
+raw_input("onwards?")
 
 # Now for creating a model config which can be
 # understood by RooStats to extract limits
