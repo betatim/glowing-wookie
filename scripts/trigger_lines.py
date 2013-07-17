@@ -7,7 +7,9 @@ from ROOT import TFile, gROOT, TH1D, TCanvas
 
 gROOT.ProcessLine(".x lhcbstyle.C")
 
-tf = TFile("/afs/cern.ch/work/t/tbird/demu/ntuples/mcpipi/strip_pipi.root")
+ds = "pipi"
+
+tf = TFile("/afs/cern.ch/work/t/tbird/demu/ntuples/mc%s/strip_%s.root"%(ds,ds))
 ttree = tf.Get("Demu_NTuple/Demu_NTuple")
 
 pipiPidCut = "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && x1_ProbNNpi*x2_ProbNNpi > 0.7 && pi_ProbNNpi > 0.6 && x1_ProbNNk < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7"
@@ -96,7 +98,7 @@ def find_most_useful(all_lines,best_lines,given_lines = None):
 
 l0_tot = calc_eff([offline_cuts])
 
-l0_hist = TH1D("l0_hist","l0_hist;;Efficency",10,0,10)
+l0_hist = TH1D("l0_hist","l0_hist;;Efficiency",10,0,10)
 l0_hist.SetBit(TH1D.kCanRebin)
 
 l0_eff = []
@@ -112,12 +114,12 @@ l0_hist.Draw()
 l0_hist.SetStats(False)
 l0_hist.GetYaxis().SetTitleFont(62)
 l0_hist.GetYaxis().SetDecimals(True)
-l0_hist.GetYaxis().SetRangeUser(0.5,0.8)
+l0_hist.GetYaxis().SetRangeUser(0.,1.05)
 
 l0_lines_for_hlt1 = l0_used_lines[:lines_per_level]
 
 print "two most efficient lines at %.2f%% are:" % (100.*l0_eff[lines_per_level-1]), l0_lines_for_hlt1
-
+l0_tc.SaveAs(ds+"_l0_trig.pdf")
 
     
 hlt1_tc = TCanvas("hlt1_tc","hlt1_tc",800,600)
@@ -126,7 +128,7 @@ hlt1_tc.SetRightMargin(0.2)
 
 hlt1_tot = calc_eff([offline_cuts,l0_lines_for_hlt1])
 
-hlt1_hist = TH1D("hlt1_hist","hlt1_hist;;Efficency",10,0,10)
+hlt1_hist = TH1D("hlt1_hist","hlt1_hist;;Efficiency",10,0,10)
 hlt1_hist.SetBit(TH1D.kCanRebin)
 
 hlt1_eff = []
@@ -142,12 +144,12 @@ hlt1_hist.Draw()
 hlt1_hist.SetStats(False)
 hlt1_hist.GetYaxis().SetTitleFont(62)
 hlt1_hist.GetYaxis().SetDecimals(True)
-hlt1_hist.GetYaxis().SetRangeUser(0.5,0.8)
+hlt1_hist.GetYaxis().SetRangeUser(0.,1.05)
 
 hlt1_lines_for_hlt2 = hlt1_used_lines[:lines_per_level]
 
 print "two most efficient lines at %.2f%% are:" % (100.*hlt1_eff[lines_per_level-1]), hlt1_lines_for_hlt2
-
+hlt1_tc.SaveAs(ds+"_hlt1_trig.pdf")
 
     
 hlt2_tc = TCanvas("hlt2_tc","hlt2_tc",800,600)
@@ -156,12 +158,12 @@ hlt2_tc.SetRightMargin(0.2)
 
 hlt2_tot = calc_eff([offline_cuts,hlt1_lines_for_hlt2,l0_lines_for_hlt1])
 
-hlt2_hist = TH1D("hlt2_hist","hlt2_hist;;Efficency",10,0,10)
+hlt2_hist = TH1D("hlt2_hist","hlt2_hist;;Efficiency",10,0,10)
 hlt2_hist.SetBit(TH1D.kCanRebin)
 
 hlt2_eff = []
 hlt2_used_lines = []
-while len(hlt2_used_lines) < len(hlt2):
+while len(hlt2_used_lines) < 5 and len(hlt2_used_lines) < len(hlt2):
   next_best_line, value = find_most_useful(hlt2,hlt2_used_lines,[hlt1_lines_for_hlt2,l0_lines_for_hlt1])
   hlt2_eff.append(value/hlt2_tot)
   hlt2_hist.Fill(next_best_line.replace("Dst_","").replace("_Dec",""), value/hlt2_tot)
@@ -172,10 +174,11 @@ hlt2_hist.Draw()
 hlt2_hist.SetStats(False)
 hlt2_hist.GetYaxis().SetTitleFont(62)
 hlt2_hist.GetYaxis().SetDecimals(True)
-hlt2_hist.GetYaxis().SetRangeUser(0.5,0.8)
+hlt2_hist.GetYaxis().SetRangeUser(0.,1.05)
 hlt2_hist.GetYaxis().LabelsOption("v")
 
 print "two most efficient lines at %.2f%% are:" % (100.*hlt2_eff[lines_per_level-1]), hlt2_used_lines[:lines_per_level]
+hlt2_tc.SaveAs(ds+"_hlt2_trig.pdf")
 
 print "overall eff is %.2f%%"%(100.*hlt2_eff[lines_per_level-1]*hlt1_eff[lines_per_level-1]*l0_eff[lines_per_level-1])
 
