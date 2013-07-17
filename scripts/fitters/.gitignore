@@ -2,3 +2,6 @@
 *.pdf
 *.txt
 gmon.out
+*.d
+*.so
+*~
