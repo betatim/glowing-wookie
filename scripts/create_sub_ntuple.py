@@ -58,11 +58,25 @@ config = {
     'infile' : directory+"pipi/strip_pipi.root",
     'outfile': directory+"pipi/strip_pipi_fitter.root",
     'cuts'   : combine_cuts([(trigPipiCut,True),(pipiPidCut,True),(likeSignCut,False)]),
+    'inPath' : "Demu_NTuple/Demu_NTuple"
   },
   'mcpipi': {
     'infile' : directory+"mcpipi/strip_pipi.root",
     'outfile': directory+"mcpipi/strip_pipi_fitter.root",
     'cuts'   : combine_cuts([(trigPipiCut,True),(pipiPidCut,True),(likeSignCut,False)]),
+    'inPath' : "Demu_NTuple/Demu_NTuple"
+  },
+  'mvaemu': {
+    'infile' : directory+"d2emu-tmva.root",
+    'outfile': directory+"emu/mva_emu_fitter.root",
+    'cuts'   : "classID==1",
+    'inPath' : "TestTree"
+  },
+  'mcemu': {
+    'infile' : directory+"d2emu-tmva.root",
+    'outfile': directory+"mcemu/mva_emu_fitter.root",
+    'cuts'   : "classID==0",
+    'inPath' : "TestTree"
   },
 }
   
@@ -88,12 +102,12 @@ def create_tree(config):
   tmpFile = TFile("/tmp/tmp-asdasdasdq-omgapony.root","RECREATE")
   tmpFile.cd() # needed for big ntuples
 
-  inTree = inFile.Get(inPath)
+  inTree = inFile.Get(config['inPath'])
   inTree.Write()
   
   n_before = inTree.GetEntries()
 
-  change_branch_status(inTree, ['D0_M', 'Dst_M', '*ProbNN*', "x*_ID", "*_Dec"])
+  change_branch_status(inTree, ['D0_M*', 'Dst_M*', '*ProbNN*', "x*_ID", "BDT_ada", "classID", "*_Dec"])
 
   print "Applying initial cuts"
   tree = inTree.CopyTree(config['cuts'])
@@ -105,28 +119,45 @@ def create_tree(config):
   #for i in Del_M ; do echo "double $i;\\" ; done
   gROOT.ProcessLine(\
   "struct TreeHelperStruct{\
+  float Dst_M;\
+  float D0_M;\
   float Del_M;\
   float RAND;\
   };")
   from ROOT import TreeHelperStruct, AddressOf
   s=TreeHelperStruct()
 
-  #for i in Del_M RAND; do echo "br_$i = tree.Branch('$i',AddressOf(s.$i),'$i/F')" ; done
-  br_Del_M = tree.Branch('Del_M',AddressOf(s,"Del_M"),'Del_M/F')
-  br_RAND = tree.Branch('RAND',AddressOf(s,"RAND"),'RAND/F')
+  if not config['inPath'] == "TestTree":
+    #for i in Del_M RAND; do echo "br_$i = tree.Branch('$i',AddressOf(s.$i),'$i/F')" ; done
+    br_Del_M = tree.Branch('Del_M',AddressOf(s,"Del_M"),'Del_M/F')
+    br_RAND = tree.Branch('RAND',AddressOf(s,"RAND"),'RAND/F')
 
-  fr_Del_M = TTreeFormula('fr_Del_M','Dst_M-D0_M',tree)
+    fr_Del_M = TTreeFormula('fr_Del_M','Dst_M-D0_M',tree)
+  else:
+    br_D0_M = tree.Branch('D0_M',AddressOf(s,"D0_M"),'D0_M/F')
+    br_Dst_M = tree.Branch('Dst_M',AddressOf(s,"Dst_M"),'Dst_M/F')
+    br_Del_M = tree.Branch('Del_M',AddressOf(s,"Del_M"),'Del_M/F')
+    br_RAND = tree.Branch('RAND',AddressOf(s,"RAND"),'RAND/F')
+
+    fr_D0_M = TTreeFormula('fr_D0_M','D0_MM',tree)
+    fr_Dst_M = TTreeFormula('fr_Dst_M','Dst_MM',tree)
+    fr_Del_M = TTreeFormula('fr_Del_M','Dst_MM-D0_MM',tree)
 
   print "Looping over all events"
   for i in range(total):
     if i%(total/10) == 0:
       print "Now read entry",i+1,"of",total
     tree.GetEntry(i)
+    
+    if config['inPath'] == "TestTree":
+      s.D0_M = fr_D0_M.EvalInstance(0) ; br_D0_M.Fill()
+      s.Dst_M = fr_Dst_M.EvalInstance(0) ; br_Dst_M.Fill()
+    
     #for i in Del_M RAND ; do echo "s.$i = fr_${i}.EvalInstance(0) ; br_$i.Fill()" ; done
     s.Del_M = fr_Del_M.EvalInstance(0) ; br_Del_M.Fill()
     s.RAND = random.random() ; br_RAND.Fill()
     
-  change_branch_status(tree, ['D0_M', 'Dst_M', 'Del_M', 'RAND'])
+  change_branch_status(tree, ['D0_M', 'Dst_M', 'Del_M', "BDT_ada",'RAND'])
 
   tree.SetName('subTree')
   tree.Write()
