@@ -176,7 +176,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
                   , 'PrescalemumuBox'     : 1.
                   , 'PrescaleKpiBox'    : 0.3
                   , 'PrescaleemuBox'    : 1.
-                  , 'PrescaleeKBox'    : 1.
+                  , 'PrescaleeKBox'     : 1.
                   , 'PrescaleepiBox'    : 1.
                   , 'PrescalepimuBox'    : 1.
                   , 'PrescaleKmuBox'    : 1.
