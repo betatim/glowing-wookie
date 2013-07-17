@@ -412,7 +412,6 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
 
   dttuple.ToolList = ["TupleToolGeometry",
                       "TupleToolEventInfo",
-                      "TupleToolGeometry",
                       "TupleToolKinematic",
                       "TupleToolPid",
                       "TupleToolPrimaries",
