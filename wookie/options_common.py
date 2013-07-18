@@ -576,11 +576,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   LoKi_pi = LoKi__Hybrid__TupleTool("LoKi_pi")
   LoKi_pi.Variables = lepton_variables
   dttuple.pi.addTool(LoKi_pi)
-  dttuple.pi.addTool(TupleToolDecayTreeFitter("PVFitpi"))
-  dttuple.pi.PVFitpi.Verbose = True
-  dttuple.pi.PVFitpi.constrainToOriginVertex = True
-  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi",
-                          "TupleToolDecayTreeFitter/PVFitpi"]
+  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi"]
 
   dttuple.addTool(TupleToolDecay, name="D0")
   LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
@@ -594,10 +590,10 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   dttuple.Dst.addTool(LoKi_Dst)
   dttuple.Dst.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_Dst"]
   
-  dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFitDst"))
-  dttuple.Dst.PVFitDst.Verbose = True
-  dttuple.Dst.PVFitDst.constrainToOriginVertex = True
-  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFitDst"]
+  dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFit"))
+  dttuple.Dst.PVFit.Verbose = True
+  dttuple.Dst.PVFit.constrainToOriginVertex = True
+  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFit"]
 
 
   if "MC" in dataType:
