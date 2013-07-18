@@ -391,6 +391,15 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     elif mag == "down":
       DaVinci().CondDBtag = "sim-20111111-vc-md100"
     DaVinci().Lumi = False
+  elif dataType == "MC2012":
+    DaVinci().DataType = "2012"
+    DaVinci().Simulation = True
+    DaVinci().DDDBtag = "Sim08-20130503-1"
+    if mag == "up":
+      DaVinci().CondDBtag = "Sim08-20130503-1-vc-mu100"
+    elif mag == "down":
+      DaVinci().CondDBtag = "Sim08-20130503-1-vc-md100"
+    DaVinci().Lumi = False
   elif dataType == "data":
     DaVinci().DataType = "2012"
     DaVinci().Simulation = False
@@ -412,6 +421,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
 
   dttuple.ToolList = ["TupleToolGeometry",
                       "TupleToolEventInfo",
+                      "TupleToolGeometry",
                       "TupleToolKinematic",
                       "TupleToolPid",
                       "TupleToolPrimaries",
