@@ -44,4 +44,5 @@ else:
   
 j.splitter = SplitByFiles(filesPerJob=n_files_per_job)
 
+print j.name
 j.submit()

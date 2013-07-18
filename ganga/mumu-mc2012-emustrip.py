@@ -11,25 +11,25 @@ else:
   test = False
   evtMax = -1
 
-j = Job(name="pipi-MC11-stripped-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="mumu-MC2012-emustrip-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
                         optsfile="../wookie/options_common.py", 
                         extraopts = """
 execute( 
   stripRun = True,
   stripConf = "default",
-  stripLine = "pipi",
-  dataType = "MC11",
+  stripLine = "emu",
+  dataType = "MC2012",
   blinded = False,
   hltReport = False,
-  tupleDecay = "pipi",
+  tupleDecay = "emu",
   evtMax = %i,
   mag = "%s")
 """ % (evtMax, polarity)
                     )
 j.backend = Dirac()
 
-dataset = j.application.readInputData("../data/pipi_%s.py"%polarity)
+dataset = j.application.readInputData("../data/mumu_%s.py"%polarity)
 
 
 n_files_per_job = int(len(dataset)/50.) # try to have around 50 jobs
@@ -44,4 +44,5 @@ else:
   
 j.splitter = SplitByFiles(filesPerJob=n_files_per_job)
 
+print j.name
 j.submit()
