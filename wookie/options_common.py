@@ -575,8 +575,12 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   dttuple.addTool(TupleToolDecay, name="pi")
   LoKi_pi = LoKi__Hybrid__TupleTool("LoKi_pi")
   LoKi_pi.Variables = lepton_variables
-  dttuple.x2.addTool(LoKi_pi)
-  dttuple.x2.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi"]
+  dttuple.pi.addTool(LoKi_pi)
+  dttuple.pi.addTool(TupleToolDecayTreeFitter("PVFit"))
+  dttuple.pi.PVFit.Verbose = True
+  dttuple.pi.PVFit.constrainToOriginVertex = True
+  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi",
+                          "TupleToolDecayTreeFitter/PVFitpi"]
 
   dttuple.addTool(TupleToolDecay, name="D0")
   LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
@@ -593,6 +597,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFit"))
   dttuple.Dst.PVFit.Verbose = True
   dttuple.Dst.PVFit.constrainToOriginVertex = True
+  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFitDst"]
 
 
   if "MC" in dataType:
