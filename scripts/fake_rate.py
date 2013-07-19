@@ -82,6 +82,8 @@ def fake_rate(working_points):
     
         for n in xrange(data.numEntries()):
             d = data.get(n)
+            if n == 0:
+                d.Print()
                 
             for wp in working_points:
                 wp.eval_efficiency(d)
@@ -95,8 +97,21 @@ def PIDe_cutter(species, val):
     def _f(d):
         return d.getRealValue(species + "_CombDLLe") > val
     return _f
+def MuonPID(species, val):
+    def _f(d):
+        return (d.getRealValue(species + "_isMuon") == 1 and
+                d.getRealValue(species + "_CombDLLmu") > val)
+    return _f
+def B2emuMuon(species):
+    def _f(d):
+        return (d.getRealValue(species + "_isMuon") == 1 and
+                d.getRealValue(species + "_CombDLLK") < 10 and
+                d.getRealValue(species + "_CombDLLmu") > -5)
+    return _f
 
 wp1 = Particle("loose_electron", PIDe_cutter("Pi", -1))
 wp2 = Particle("tight_electron", PIDe_cutter("Pi", 3))
+wp3 = Particle("basic_muon", MuonPID("Pi", 0))
+wp4 = Particle("B2emu_muon", B2emuMuon("Pi"))
 
-fake_rate([wp1, wp2])
+fake_rate([wp1, wp2, wp3, wp4])

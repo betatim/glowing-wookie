@@ -3,7 +3,7 @@ import platform
 
 from wookie import make_dir
 
-base = "/tmp/%s/"%(os.getenv("USER")
+base = "/tmp/%s/"%(os.getenv("USER"))
 
 _at_cern = "lxplus" in platform.node()
 if os.getenv("USER") == "thead" and not _at_cern:
