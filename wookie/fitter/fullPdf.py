@@ -49,7 +49,7 @@ def setup_workspace(config):
   Del_M = w.factory("Del_M[139,155]")
   Del_M.setUnit("MeV")
   D0_M.setUnit("MeV")
-  D0_M.setBins(100)
+  D0_M.setBins(200)
 
   Dataset = w.factory("DataSet[BDT1,BDT2,BDT3,PiPi]")
   
@@ -57,7 +57,7 @@ def setup_workspace(config):
   w.factory("BDT_ada[-1,1]")
   
   for data in ["", "BDT1", "BDT2", "BDT3", "PiPi"]:
-    for dst_side in ["", "dstsig", "dsthigh", "dstlow"]:
+    for dst_side in ["", "delsig", "delhigh", "dellow"]:
       for d_side in ["", "dsig", "dhigh", "dlow"]:
         name = data+dst_side+d_side
         
@@ -70,11 +70,11 @@ def setup_workspace(config):
         elif data == "PiPi":
           Dataset.setRange(name,"PiPi")
         
-        if dst_side == "dsthigh":
+        if dst_side == "delhigh":
           Del_M.setRange(name,148.,155.)
-        elif dst_side == "dstsig":
+        elif dst_side == "delsig":
           Del_M.setRange(name,143.,148.)
-        elif dst_side == "dstlow":
+        elif dst_side == "dellow":
           Del_M.setRange(name,139.,143.)
           
         if d_side == "dhigh":
@@ -93,35 +93,37 @@ def setup_workspace(config):
   w.factory("RooGenericPdf::PiPi_D0M_Range('(D0_M>PiPi_D0M_Min&&D0_M<PiPi_D0M_Max)',{D0_M,PiPi_D0M_Min[1798],PiPi_D0M_Max[1930]})")
 
   #  D0_M Signal
-  w.factory("RooGaussianTrunk::PiPi_D0M_Sig_Gaus1(D0_M,PiPi_D0M_Sig_Gaus_Mean[1865,1850,1880],PiPi_D0M_Sig_Gaus_Sigma1[10,1,30],PiPi_D0M_Min,PiPi_D0M_Max)")
-  w.factory("RooGaussianTrunk::PiPi_D0M_Sig_Gaus2(D0_M,PiPi_D0M_Sig_Gaus_Mean,PiPi_D0M_Sig_Gaus_Sigma2[3,1,30],PiPi_D0M_Min,PiPi_D0M_Max)")
-  w.factory("SUM::PiPi_D0M_Sig(PiPi_D0M_Sig_Gaus1_Frac[0.8,0,1]*PiPi_D0M_Sig_Gaus1,PiPi_D0M_Sig_Gaus2)")
+  w.factory("RooGaussianTrunk::PiPi_D0M_Sig_Gaus1(D0_M,PiPi_D0M_Sig_Gaus_Mean[1867,1850,1880],PiPi_D0M_Sig_Gaus_Sigma1[5,0,10],PiPi_D0M_Min,PiPi_D0M_Max)")
+  w.factory("RooGaussianTrunk::PiPi_D0M_Sig_Gaus2(D0_M,PiPi_D0M_Sig_Gaus_Mean,PiPi_D0M_Sig_Gaus_Sigma2[11,5,15],PiPi_D0M_Min,PiPi_D0M_Max)")
+  w.factory("SUM::PiPi_D0M_Sig(PiPi_D0M_Sig_Gaus1_Frac[0.5,0,1]*PiPi_D0M_Sig_Gaus1,PiPi_D0M_Sig_Gaus2)")
   #w.factory("PROD::PiPi_D0M_Sig(PiPi_D0M_Sig_Sum,PiPi_D0M_Range)")
   
   #  MisId
-  w.factory("RooGaussianTrunk::PiPi_D0M_MisId_Gaus1(D0_M,PiPi_D0M_MisId_Gaus_Mean[1800,1740,1820],PiPi_D0M_Sig_Gaus_Sigma1,PiPi_D0M_Min,PiPi_D0M_Max)")
-  w.factory("RooGaussianTrunk::PiPi_D0M_MisId_Gaus2(D0_M,PiPi_D0M_MisId_Gaus_Mean,PiPi_D0M_Sig_Gaus_Sigma2,PiPi_D0M_Min,PiPi_D0M_Max)")
-  w.factory("SUM::PiPi_D0M_MisId(PiPi_D0M_Sig_Gaus1_Frac*PiPi_D0M_MisId_Gaus1,PiPi_D0M_MisId_Gaus2)")
-  #w.factory("PROD::PiPi_D0M_MisId(PiPi_D0M_MisId_Sum,PiPi_D0M_Range)")
+  #w.factory("RooGaussianTrunk::PiPi_D0M_MisId_Gaus1(D0_M,PiPi_D0M_MisId_Gaus_Mean[1790],PiPi_D0M_Sig_Gaus_Sigma1,PiPi_D0M_Min,PiPi_D0M_Max)")
+  #w.factory("RooGaussianTrunk::PiPi_D0M_MisId_Gaus2(D0_M,PiPi_D0M_MisId_Gaus_Mean,PiPi_D0M_Sig_Gaus_Sigma2,PiPi_D0M_Min,PiPi_D0M_Max)")
+  #w.factory("SUM::PiPi_D0M_MisId(PiPi_D0M_Sig_Gaus1_Frac*PiPi_D0M_MisId_Gaus1,PiPi_D0M_MisId_Gaus2)")
+  ##w.factory("PROD::PiPi_D0M_MisId(PiPi_D0M_MisId_Sum,PiPi_D0M_Range)")
+  w.factory("RooExponential::PiPi_D0M_MisId_Exp(D0_M,PiPi_D0M_MisId_Exp_Const[-0.001,-0.01,0])")
+  w.factory("PROD::PiPi_D0M_MisId(PiPi_D0M_MisId_Exp,PiPi_D0M_Range)")
   
   #  D0_M Combinatorical
-  w.factory("RooChebychev::PiPi_D0M_Bkg_Poly(D0_M,{PiPi_D0M_Bkg_Poly_a1[0,-1,1]})")
+  w.factory("RooChebychev::PiPi_D0M_Bkg_Poly(D0_M,{PiPi_D0M_Bkg_Poly_a1[-0.1,-3,1]})")
   w.factory("PROD::PiPi_D0M_Bkg(PiPi_D0M_Bkg_Poly,PiPi_D0M_Range)")
   
   #  Del_M signal
-  w.factory("RooGaussian::PiPi_DelM_Sig_Gaus1(Del_M,PiPi_DelM_Sig_Gaus_Mean[145.5,143,148],PiPi_DelM_Sig_Gaus_Sigma1[1,0,5] )")
-  w.factory("RooGaussian::PiPi_DelM_Sig_Gaus2(Del_M,PiPi_DelM_Sig_Gaus_Mean,PiPi_DelM_Sig_Gaus_Sigma2[.1,0,2] )")
-  w.factory("SUM::PiPi_DelM_Sig(PiPi_DelM_Sig_Gaus1_Frac[0.8,0,1]*PiPi_DelM_Sig_Gaus1,PiPi_DelM_Sig_Gaus2)")
+  w.factory("RooGaussian::PiPi_DelM_Sig_Gaus1(Del_M,PiPi_DelM_Sig_Gaus_Mean[145.5,145,146],PiPi_DelM_Sig_Gaus_Sigma1[.4,0,1] )")
+  w.factory("RooGaussian::PiPi_DelM_Sig_Gaus2(Del_M,PiPi_DelM_Sig_Gaus_Mean,PiPi_DelM_Sig_Gaus_Sigma2[.7,.1,2] )")
+  w.factory("SUM::PiPi_DelM_Sig(PiPi_DelM_Sig_Gaus1_Frac[0.05,0,.5]*PiPi_DelM_Sig_Gaus1,PiPi_DelM_Sig_Gaus2)")
 
   #  Del_M Combinatorical
-  w.factory("RooDstD0BG::PiPi_DelM_Bkg(Del_M,PiPi_DelM_Bkg_m0[139.5,134,144],PiPi_DelM_Bkg_c[80,0,1000],PiPi_DelM_Bkg_a[-1,-100,10],PiPi_DelM_Bkg_b[0.2,-0.2,10])")
+  w.factory("RooDstD0BG::PiPi_DelM_Bkg(Del_M,PiPi_DelM_Bkg_m0[139.5,137.5,140.5],PiPi_DelM_Bkg_c[40,7,350],PiPi_DelM_Bkg_a[-20,-100,-1],PiPi_DelM_Bkg_b[0.4,-0.1,2])")
 
   w.factory("PROD::PiPi_Sig(PiPi_DelM_Sig,PiPi_D0M_Sig)")
   w.factory("PROD::PiPi_Comb(PiPi_DelM_Bkg,PiPi_D0M_Bkg)")
   w.factory("PROD::PiPi_MisId(PiPi_DelM_Sig,PiPi_D0M_MisId)")
   w.factory("PROD::PiPi_Prompt(PiPi_DelM_Bkg,PiPi_D0M_Sig)")
   
-  w.factory("SUM::PiPi_Final_PDF(PiPi_N_Sig[10000,0,100000]*PiPi_Sig,PiPi_N_Prompt[5000,0,50000]*PiPi_Prompt,PiPi_N_Comb[10000,0,100000]*PiPi_Comb,PiPi_N_MisId[1000,0,10000]*PiPi_MisId)")
+  w.factory("SUM::PiPi_Final_PDF(PiPi_N_Sig[50000,20000,110000]*PiPi_Sig,PiPi_N_Prompt[45000,20000,60000]*PiPi_Prompt,PiPi_N_Comb[55000,44000,90000]*PiPi_Comb,PiPi_N_MisId[40000,10000,100000]*PiPi_MisId)")
   
 
   # --- eMu ---
@@ -131,13 +133,13 @@ def setup_workspace(config):
     w.factory("BDT%(n)i_Sig_Eff[0.3,0,1]"%({"n":n}))
     
   w.factory("EMu_Eff[%f]"%(config['emuEff']))
-  w.factory("EMu_BR[1e-4,0,1e-3]")
+  w.factory("EMu_BR[1e-8,-1e-7,1e-7]")
   
   w.factory("PiPi_Eff[%f]"%(config['pipiEff']))
   w.factory("PiPi_BR[%f]"%(config['pipiBR'][0]))
   w.obj("PiPi_BR").setError(config['pipiBR'][1])
   
-  w.factory("RooFormulaVar::EMu_N_Sig('PiPi_N_Sig*((EMu_BR*EMu_Eff)/(PiPi_BR*PiPi_Eff))',{PiPi_BR,EMu_BR,EMu_Eff,PiPi_Eff,PiPi_N_Sig})")
+  w.factory("RooFormulaVar::EMu_N_Sig('abs(PiPi_N_Sig*((EMu_BR*EMu_Eff)/(PiPi_BR*PiPi_Eff)))',{PiPi_BR,EMu_BR,EMu_Eff,PiPi_Eff,PiPi_N_Sig})")
     
   for n in (1,2,3):
     if n is not 3:
@@ -163,7 +165,10 @@ def setup_workspace(config):
     w.factory("SUM::BDT%(n)i_D0M_Bkg(BDT%(n)i_D0M_Bkg_Poly_Frac*BDT%(n)i_D0M_Bkg_Poly, BDT%(n)i_D0M_Bkg_Exp)"%({"n":n}))
 
     #  Del_M Combinatorical
-    w.factory("RooDstD0BG::BDT%(n)i_DelM_Bkg(Del_M,BDT%(n)i_DelM_Bkg_m0[139.5,134,144],BDT%(n)i_DelM_Bkg_c[80,0,1000],BDT%(n)i_DelM_Bkg_a[-1,-100,10],BDT%(n)i_DelM_Bkg_b[0.2,-0.2,10])"%({"n":n}))
+    if n is 1:
+      w.factory("RooDstD0BG::BDT%(n)i_DelM_Bkg(Del_M,BDT_DelM_Bkg_m0[139.5,137.5,140.5],BDT_DelM_Bkg_c[40,7,350],BDT_DelM_Bkg_a[-20,-100,-1],BDT_DelM_Bkg_b[0.4,-0.5,2])"%({"n":n}))
+    else:
+      w.factory("RooDstD0BG::BDT%(n)i_DelM_Bkg(Del_M,BDT_DelM_Bkg_m0,BDT_DelM_Bkg_c,BDT_DelM_Bkg_a,BDT_DelM_Bkg_b)"%({"n":n}))
     
     #  Del_M signal
     w.factory("RooGaussian::BDT%(n)i_DelM_Sig_Gaus1(Del_M,BDT%(n)i_DelM_Sig_Gaus_Mean[145.5,143,148],BDT%(n)i_DelM_Sig_Gaus_Sigma1[1,0,5] )"%({"n":n}))

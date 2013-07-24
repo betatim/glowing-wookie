@@ -391,6 +391,15 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     elif mag == "down":
       DaVinci().CondDBtag = "sim-20111111-vc-md100"
     DaVinci().Lumi = False
+  elif dataType == "MC2012":
+    DaVinci().DataType = "2012"
+    DaVinci().Simulation = True
+    DaVinci().DDDBtag = "Sim08-20130503-1"
+    if mag == "up":
+      DaVinci().CondDBtag = "Sim08-20130503-1-vc-mu100"
+    elif mag == "down":
+      DaVinci().CondDBtag = "Sim08-20130503-1-vc-md100"
+    DaVinci().Lumi = False
   elif dataType == "data":
     DaVinci().DataType = "2012"
     DaVinci().Simulation = False
@@ -412,6 +421,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
 
   dttuple.ToolList = ["TupleToolGeometry",
                       "TupleToolEventInfo",
+                      "TupleToolGeometry",
                       "TupleToolKinematic",
                       "TupleToolPid",
                       "TupleToolPrimaries",
@@ -566,11 +576,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   LoKi_pi = LoKi__Hybrid__TupleTool("LoKi_pi")
   LoKi_pi.Variables = lepton_variables
   dttuple.pi.addTool(LoKi_pi)
-  dttuple.pi.addTool(TupleToolDecayTreeFitter("PVFit"))
-  dttuple.pi.PVFit.Verbose = True
-  dttuple.pi.PVFit.constrainToOriginVertex = True
-  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi",
-                          "TupleToolDecayTreeFitter/PVFitpi"]
+  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi"]
 
   dttuple.addTool(TupleToolDecay, name="D0")
   LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
@@ -587,7 +593,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFit"))
   dttuple.Dst.PVFit.Verbose = True
   dttuple.Dst.PVFit.constrainToOriginVertex = True
-  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFitDst"]
+  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFit"]
 
 
   if "MC" in dataType:

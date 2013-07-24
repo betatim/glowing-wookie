@@ -133,12 +133,12 @@ Final_PDF = w.obj("Final_PDF")
 
 
 componantColours = [
-    ["Sig", 16, ROOT.kSolid,16,1001],
-    ["Comb", 14, 7],
-    ["Prompt", ROOT.kRed+4, 4],
-    ["MisId", ROOT.kMagenta+2, ROOT.kSolid,0,0,1],
-    ["D0M_Bkg_Exp", ROOT.kGreen+4],
-    ["D0M_Bkg_Poly", ROOT.kGreen+2],
+    ["BDT1_Sig,BDT2_Sig,BDT3_Sig,PiPi_Sig", 16, ROOT.kSolid,16,1001],
+    ["BDT1_Comb,BDT2_Comb,BDT3_Comb_Blind,PiPi_Comb", 14, 7],
+    ["BDT1_Prompt,BDT2_Prompt,BDT3_Prompt,PiPi_Prompt", ROOT.kRed+4, 4],
+    ["BDT1_MisId,BDT2_MisId,BDT3_MisId,PiPi_MisId", ROOT.kMagenta+2, ROOT.kSolid,0,0,1],
+    #["D0M_Bkg_Exp", ROOT.kGreen+4],
+    #["D0M_Bkg_Poly", ROOT.kGreen+2],
     ["*", ROOT.kBlue]
   ]
 
@@ -175,11 +175,11 @@ mvaFile = TFile(config['mvaFile'],"OPEN")
 mvaTree = mvaFile.Get("subTree")
 
 
-bdt1UnbDataSet = RooDataSet("bdt1UnbDataSet", "bdt1UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada<0")
+bdt1UnbDataSet = RooDataSet("bdt1UnbDataSet", "bdt1UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada<0 && Del_M>139.4")
 bdt1UnbDataSet.Print()
-bdt2UnbDataSet = RooDataSet("bdt2UnbDataSet", "bdt2UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.0 && BDT_ada<0.08")
+bdt2UnbDataSet = RooDataSet("bdt2UnbDataSet", "bdt2UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.0 && BDT_ada<0.08 && Del_M>139.4")
 bdt2UnbDataSet.Print()
-bdt3UnbDataSet = RooDataSet("bdt3UnbDataSet", "bdt3UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.08")
+bdt3UnbDataSet = RooDataSet("bdt3UnbDataSet", "bdt3UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.08 && Del_M>139.4")
 bdt3UnbDataSet.Print()
 
 bdt1UnbPruneDataSet = RooDataSet("bdt1UnbPruneDataSet", "bdt1UnbPruneDataSet", bdt1UnbDataSet, w.set("argsBasic"), "")
@@ -190,7 +190,7 @@ bdt3UnbPruneDataSet = RooDataSet("bdt3UnbPruneDataSet", "bdt3UnbPruneDataSet", b
 bdt3UnbPruneDataSet.Print()
 
 if not config['mc']:
-  pipiUnbDataSet = RooDataSet("pipiUnbDataSet", "pipiUnbDataSet", pipiTree, w.set("argsPreCutPiPi"), "")
+  pipiUnbDataSet = RooDataSet("pipiUnbDataSet", "pipiUnbDataSet", pipiTree, w.set("argsPreCutPiPi"), "Del_M>139.4")
   pipiUnbDataSet.Print()
 
   pipiUnbPruneDataSet = RooDataSet("pipiUnbPruneDataSet", "pipiUnbPruneDataSet", pipiUnbDataSet, w.set("argsBasic"), "D0_M>1798 && D0_M<1930")
@@ -265,9 +265,11 @@ print "To MINUIT! Fitting to %s::%s at %s, saving result in %s" % (Final_PDF.Cla
 r=False
 if config['doFit']:
   if config['doBinned']:
-    r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"),)
+    r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
   else:
-    r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"),)
+    r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
+  r.SetName("RooFitResults")
+  getattr(w, 'import')(r)
 elif config['loadFit']:
   fitResultsFile = TFile.Open(loadFileName,"OPEN")
   r = fitResultsFile.Get("RooFitResults")
@@ -275,8 +277,6 @@ elif config['loadFit']:
 
 RooMsgService.instance().setGlobalKillBelow(RooFit.FATAL)
 
-r.SetName("RooFitResults")
-getattr(w, 'import')(r)
 
 if r:
   finalPars = r.floatParsFinal()
@@ -536,18 +536,20 @@ if config['doPlots']:
 
   for datacat in (["BDT1","BDT2","BDT3", "PiPi"] if simultaneousFit else ['']):
     for dsN,data in [("FullData",[binnedDataSet])]:
-      for dst_side in ["", "dstsig", "dsthigh", "dstlow"]:
+      #for dst_side in ["", "delhigh", "delsig", "dellow"]:
+      for dst_side in [""]:
         for d_side in [""]:
           cutName = datacat+dst_side+d_side
-          plotName = dsN + "_" + datacat + "_D0M_" + (dst_side if dst_side != "" else "dstall") + "_" + (d_side if d_side != "" else "d0all")
+          plotName = dsN + "_" + datacat + "_D0M_" + (dst_side if dst_side != "" else "delall") + "_" + (d_side if d_side != "" else "d0all")
           queueList.append(Queue())
           processList.append(Process(target=makePlotArray, args=(queueList[-1],w,plotName,w.obj("D0_M"),nCPUs,mixState,datacat,cutName,data,-1,False)))
 
     for dsN,data in [("FullData",[binnedDataSet])]:
       for dst_side in [""]:
-        for d_side in ["", "dsig", "dhigh", "dlow"]:
+        #for d_side in ["", "dhigh", "dsig", "dlow"]:
+        for d_side in [""]:
           cutName = datacat+dst_side+d_side
-          plotName = dsN + "_" + datacat + "_DelM_" + (dst_side if dst_side != "" else "dstall") + "_" + (d_side if d_side != "" else "d0all")
+          plotName = dsN + "_" + datacat + "_DelM_" + (dst_side if dst_side != "" else "delall") + "_" + (d_side if d_side != "" else "d0all")
           queueList.append(Queue())
           processList.append(Process(target=makePlotArray, args=(queueList[-1],w,plotName,w.obj("Del_M"),nCPUs,mixState,datacat,cutName,data,-1,False)))
 

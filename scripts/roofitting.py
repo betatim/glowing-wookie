@@ -93,8 +93,8 @@ raw_input("onwards?")
 # understood by RooStats to extract limits
 mc = R.RooStats.ModelConfig("ModelConfig", w1)
 mc.SetPdf(pdf)
-mc.SetParametersOfInterest("mu")
-mc.SetObservables("x,index")
+mc.SetParametersOfInterest(R.RooArgSet(w1.var("mu")))
+mc.SetObservables(R.RooArgSet(x,index))
 
 w1.defineSet("nuisanceParameters", "abg1,abg2,nbg1,nbg2")
 mc.SetNuisanceParameters(w1.set("nuisanceParameters"))
