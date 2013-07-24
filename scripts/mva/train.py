@@ -1,5 +1,6 @@
 import string
 import random
+import math
 
 import ROOT as R
 from ROOT import TMVA
@@ -20,7 +21,6 @@ class V(object):
     def __call__(self, evt):
         return getattr(evt, self.branch)
 
-
 class DeltaV(object):
     def __init__(self, branch1, branch2):
         """Computes `branch1` - `branch2`."""
@@ -35,6 +35,56 @@ class DeltaV(object):
     def __call__(self, evt):
         return getattr(evt, self.branch1) - getattr(evt, self.branch2)
 
+class MinV(object):
+    def __init__(self, branches):
+        """Computes min(`branches`)."""
+        self.branches = branches
+        self.name = "min " +"_".join([safe_varname(branch) for branch in branches])
+
+    def enable_vars(self, tree):
+        for br in self.branches:
+            tree.SetBranchStatus(br, True)
+
+    def __call__(self, evt):
+        return min([getattr(evt, br) for br in self.branches])
+
+class D0Pointing(object):
+    def __init__(self):
+        """Computes -log(1-cos(DIRA))."""
+        self.name = "D0_pointing"
+
+    def enable_vars(self, tree):
+        tree.SetBranchStatus("D0_DIRA", True)
+
+    def __call__(self, evt):
+        return -1*math.log(1-math.cos(evt.D0_DIRA))
+
+class LeptonCosTheta(object):
+    def __init__(self):
+        """Computes angle of +ve charge lepton in D COM."""
+        self.name = "LepCosTheta"
+
+    def enable_vars(self, tree):
+        tree.SetBranchStatus("x1_CosTheta", True)
+        tree.SetBranchStatus("x2_CosTheta", True)
+        tree.SetBranchStatus("x1_ID", True)
+
+    def __call__(self, evt):
+        if evt.x1_ID > 0:
+            return abs(evt.x1_CosTheta)
+        else:
+            return abs(evt.x2_CosTheta)
+
+class D0PtScaledIso(object):
+    def __init__(self):
+        self.name = "D0_PtScaledIso"
+
+    def enable_vars(self, tree):
+        tree.SetBranchStatus("D0_cpt_1.00", True)
+        tree.SetBranchStatus("D0_PT", True)
+
+    def __call__(self, evt):
+        return evt.D0_PT/(evt.D0_PT + getattr(evt, "D0_cpt_1.00"))
 
 class PIDSelection(object):
     def __init__(self, pid_mu, pid_e):
@@ -142,38 +192,21 @@ if __name__ == "__main__":
     
     factory = TMVA.Factory("d2emu", out_file, "!Color")
 
-    variables = [V("D0_CosTheta"),
+    variables = [V("D0_CosTheta"), #theta*
                  V("D0_DOCA"),
-                 #V("D0_DIRA"),
-                 ##V("D0_DIRA_ORIVX"),
-                 ##V("D0_DIRA_OWNPV"),
+                 D0Pointing(),
                  V("D0_VChi2_per_NDOF"),
-                 V("D0_MinIP_PRIMARY"),
-                 V("D0_IP_OWNPV"),
-                 V("D0_FD_ORIVX"),
-                 V("D0_FD_OWNPV"),
-                 V("Dst_DOCA"),
-                 V("Dst_DIRA"),
-                 ##V("Dst_DIRA_OWNPV"),
-                 V("Dst_VChi2_per_NDOF"),
-                 V("Dst_MinIP_PRIMARY"),
-                 ##V("Dst_IP_OWNPV"),
-                 ##V("Dst_FD_OWNPV"),
-                 V("x1_IP_OWNPV"),
-                 V("x2_IP_OWNPV"),
-                 ##V("x1_IPCHI2_OWNPV"),
-                 ##V("x2_IPCHI2_OWNPV"),
-                 ##V("x1_TRGHOSTPROB"),
-                 ##V("x2_TRGHOSTPROB"),
-                 V("x1_TRACK_CHI2NDOF"),
-                 V("x2_TRACK_CHI2NDOF"),
-                 V("x1_TRACK_MatchCHI2"),
-                 V("x2_TRACK_MatchCHI2"),
+                 V("D0_MinIPChi2_PRIMARY"),
+                 V("D0_IPChi2"),
+                 V("Dst_MinIPChi2_PRIMARY"),
+                 #V("x1_CosTheta"),
+                 LeptonCosTheta(), #theta
+                 MinV(["x1_IPCHI2_OWNPV", "x2_IPCHI2_OWNPV"]),
+                 MinV(["x1_PT", "x2_PT"]),
+                 D0PtScaledIso(),
              ]
-    spectators = [V("D0_MinIPChi2_PRIMARY"),
-                  V("D0_IPChi2"),
-                  V("D0_MM"),
-                  V("Dst_MM"),
+    spectators = [V("D0_M"),
+                  V("Dst_M"),
                   V("pi_ProbNNmu"),
                   V("pi_ProbNNpi"),
                   V("x1_BremMultiplicity"),
@@ -194,7 +227,7 @@ if __name__ == "__main__":
                   V("x2_PIDK"),
                   V("x2_cp_0.50"),
                   V("x2_cmult_0.50"),
-                  DeltaV("Dst_MM", "D0_MM"),
+                  DeltaV("Dst_M", "D0_M"),
               ]
     
     
@@ -202,7 +235,7 @@ if __name__ == "__main__":
                   variables,
                   spectators)
 
-    selector = PIDSelection(pid_mu=-1., pid_e=0.)
+    selector = PIDSelection(pid_mu=-10., pid_e=-10.)
     
     Nmax = 16000
     add_events(factory, tree_sig, variables + spectators,
@@ -230,9 +263,10 @@ if __name__ == "__main__":
 
     # For the moment ADA boost seems to perform as well
     # as all the others and does well in terms of overtraining
-    factory.BookMethod(TMVA.Types.kBDT, "BDT_ada",
-                       "BoostType=AdaBoost:nCuts=-1:MaxDepth=3:"
-                       "PruneMethod=NoPruning")
+    for max_depth in (3,4,5,6,7,8):
+        factory.BookMethod(TMVA.Types.kBDT, "BDT_ada_%i"%max_depth,
+                           "BoostType=AdaBoost:nCuts=-1:MaxDepth=%i:"
+                           "PruneMethod=NoPruning"%(max_depth))
     
     print "Training"
     factory.TrainAllMethods()
