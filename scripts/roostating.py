@@ -35,7 +35,7 @@ profll = R.RooStats.ProfileLikelihoodTestStat(sbModel.GetPdf())
 profll.SetOneSided(True)
 toy_mcs.SetTestStatistic(profll);
 # configure and run the scan
-hypo_inv.SetFixedScan(40, 0, 4)
+hypo_inv.SetFixedScan(80, 0.1, 2)
 r = hypo_inv.GetInterval();
 # get result and plot it
 upperLimit = r.UpperLimit()

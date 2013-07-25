@@ -88,6 +88,9 @@ class D0PtScaledIso(object):
 
 class PIDSelection(object):
     def __init__(self, pid_mu, pid_e):
+        """Selects events for which PIDe and PIDmu are above
+        `pid_mu` and `pid_e`.
+        """
         self.pid_e = pid_e
         self.pid_mu = pid_mu
         # Stick to DLL variables for the moment
@@ -235,7 +238,7 @@ if __name__ == "__main__":
                   variables,
                   spectators)
 
-    selector = PIDSelection(pid_mu=-10., pid_e=-10.)
+    selector = PIDSelection(pid_mu=-1., pid_e=1.)
     
     Nmax = 16000
     add_events(factory, tree_sig, variables + spectators,
@@ -252,21 +255,26 @@ if __name__ == "__main__":
     options = "NormMode=None"
     factory.PrepareTrainingAndTestTree(R.TCut(""), R.TCut(""),
                                        options)
-    #bdt_options = ("NTrees=%i:UseRandomisedTrees=True:MaxDepth=%i:"
-    #               "PruneMethod=NoPruning:UseNvars=%i:nCuts=-1")
-    #bdt_options = bdt_options%(3)
-    #import itertools
-    #for trees,depth in itertools.product((1,2,3,4,5,6,7,8,9,10,20,40),
-    #                                     (3,5,8)):
-    #    factory.BookMethod(TMVA.Types.kBDT, "BDT_%i_%i"%(trees,depth),
-    #                       bdt_options%(trees, depth, len(variables)/2))
+    bdt_options = ("NTrees=%i:UseRandomisedTrees=True:MaxDepth=%i:"
+                   "PruneMethod=NoPruning:UseNvars=%i:nCuts=-1")
+    import itertools
+    max_depths = (1,2,3,4,5,6,7,8,9)
+    n_trees = (1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640)
+    for trees,depth in itertools.product(n_trees,
+                                         max_depths):
+        factory.BookMethod(TMVA.Types.kBDT,
+                           "BDT_random_%i_%i"%(trees,depth),
+                           bdt_options%(trees, depth, len(variables)/2))
 
     # For the moment ADA boost seems to perform as well
     # as all the others and does well in terms of overtraining
-    for max_depth in (3,4,5,6,7,8):
-        factory.BookMethod(TMVA.Types.kBDT, "BDT_ada_%i"%max_depth,
-                           "BoostType=AdaBoost:nCuts=-1:MaxDepth=%i:"
-                           "PruneMethod=NoPruning"%(max_depth))
+    for trees,max_depth,weighted in itertools.product(n_trees, max_depths, (1, 0)):
+            factory.BookMethod(TMVA.Types.kBDT,
+                               "BDT_ada_%i_%i_%i"%(trees, max_depth, weighted),
+                               "NTrees=%i:BoostType=AdaBoost:nCuts=-1:MaxDepth=%i:"
+                               "PruneMethod=NoPruning:UseWeightedTrees=%i"%(trees,
+                                                                            max_depth,
+                                                                            weighted))
     
     print "Training"
     factory.TrainAllMethods()
