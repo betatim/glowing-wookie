@@ -1,13 +1,22 @@
 
+import sys
+
+if len(sys.argv) < 2:
+  print "The dataset must also be specified, either emu or pipi."
+  sys.exit(1)
+
 import re
 import operator
+
+from ROOT import gROOT
+gROOT.SetBatch(True)
 
 import ROOT
 from ROOT import TFile, gROOT, TH1D, TCanvas
 
 gROOT.ProcessLine(".x lhcbstyle.C")
 
-ds = "pipi"
+ds = sys.argv[1]
 
 tf = TFile("/afs/cern.ch/work/t/tbird/demu/ntuples/mc%s/strip_%s.root"%(ds,ds))
 ttree = tf.Get("Demu_NTuple/Demu_NTuple")
@@ -22,9 +31,9 @@ l0_tc = TCanvas("l0_tc","l0_tc",800,600)
 l0_tc.SetBottomMargin(0.2)
 l0_tc.SetRightMargin(0.2)
 
-l0_re = re.compile("Dst_L0.*_Dec")
-hlt1_re = re.compile("Dst_Hlt1.*_Dec")
-hlt2_re = re.compile("Dst_Hlt2.*_Dec")
+l0_re = re.compile("Dst_L0.*_(TIS|TOS)")
+hlt1_re = re.compile("Dst_Hlt1.*_(TIS|TOS)")
+hlt2_re = re.compile("Dst_Hlt2.*_(TIS|TOS)")
 
 l0 = []
 hlt1 = []
@@ -33,7 +42,7 @@ hlt2 = []
 for br in ttree.GetListOfBranches():
   br_name = br.GetName()
   #print br_name
-  if (not ("Global" in br_name)) and (not ("Phys" in br_name)):
+  if (not ("Global_TOS" in br_name)) and (not ("Phys_TOS" in br_name)):
     if hlt1_re.match(br_name):
       hlt1.append(br_name)
     elif hlt2_re.match(br_name):
@@ -103,10 +112,10 @@ l0_hist.SetBit(TH1D.kCanRebin)
 
 l0_eff = []
 l0_used_lines = []
-while len(l0_used_lines) < len(l0):
+while len(l0_used_lines) < 7 and len(l0_used_lines) < len(l0):
   next_best_line, value = find_most_useful(l0,l0_used_lines)
   l0_eff.append(value/l0_tot)
-  l0_hist.Fill(next_best_line.replace("Dst_","").replace("_Dec",""), value/l0_tot)
+  l0_hist.Fill(next_best_line.replace("Dst_","").replace("Decision","").replace("L0",""), value/l0_tot)
   l0_used_lines.append(next_best_line)
 
 l0_hist.LabelsDeflate()
@@ -133,10 +142,10 @@ hlt1_hist.SetBit(TH1D.kCanRebin)
 
 hlt1_eff = []
 hlt1_used_lines = []
-while len(hlt1_used_lines) < len(hlt1):
+while len(hlt1_used_lines) < 7 and len(hlt1_used_lines) < len(hlt1):
   next_best_line, value = find_most_useful(hlt1,hlt1_used_lines,[l0_lines_for_hlt1])
   hlt1_eff.append(value/hlt1_tot)
-  hlt1_hist.Fill(next_best_line.replace("Dst_","").replace("_Dec",""), value/hlt1_tot)
+  hlt1_hist.Fill(next_best_line.replace("Dst_","").replace("Decision","").replace("Hlt1",""), value/hlt1_tot)
   hlt1_used_lines.append(next_best_line)
 
 hlt1_hist.LabelsDeflate()
@@ -163,10 +172,10 @@ hlt2_hist.SetBit(TH1D.kCanRebin)
 
 hlt2_eff = []
 hlt2_used_lines = []
-while len(hlt2_used_lines) < 5 and len(hlt2_used_lines) < len(hlt2):
+while len(hlt2_used_lines) < 7 and len(hlt2_used_lines) < len(hlt2):
   next_best_line, value = find_most_useful(hlt2,hlt2_used_lines,[hlt1_lines_for_hlt2,l0_lines_for_hlt1])
   hlt2_eff.append(value/hlt2_tot)
-  hlt2_hist.Fill(next_best_line.replace("Dst_","").replace("_Dec",""), value/hlt2_tot)
+  hlt2_hist.Fill(next_best_line.replace("Dst_","").replace("Decision","").replace("Hlt2",""), value/hlt2_tot)
   hlt2_used_lines.append(next_best_line)
 
 hlt2_hist.LabelsDeflate()
