@@ -260,6 +260,10 @@ if __name__ == "__main__":
     import itertools
     max_depths = (1,2,3,4,5,6,7,8,9)
     n_trees = (1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640)
+
+    xxx ="""
+    max_depths = (2,3,4)
+    n_trees = (320, 480, 640)
     for trees,depth in itertools.product(n_trees,
                                          max_depths):
         factory.BookMethod(TMVA.Types.kBDT,
@@ -271,8 +275,41 @@ if __name__ == "__main__":
     for trees,max_depth,weighted in itertools.product(n_trees, max_depths, (1, 0)):
             factory.BookMethod(TMVA.Types.kBDT,
                                "BDT_ada_%i_%i_%i"%(trees, max_depth, weighted),
+                               "DoBoostMonitor=1:"
                                "NTrees=%i:BoostType=AdaBoost:nCuts=-1:MaxDepth=%i:"
                                "PruneMethod=NoPruning:UseWeightedTrees=%i"%(trees,
+                                                                            max_depth,
+                                                                            weighted))
+
+    max_depths = (1,2,3,4,5,6,7,8,9)
+    n_trees = (1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640)
+    for trees,max_depth,weighted,shrink in itertools.product(n_trees,
+                                                             max_depths,
+                                                             (1, 0),
+                                                             (0.01,0.02,0.05,0.1,0.2,0.3,0.7,1.)):
+            factory.BookMethod(TMVA.Types.kBDT,
+                               "BDT_grad_%i_%i_%i_%i"%(trees, max_depth, weighted, shrink*100),
+                               "DoBoostMonitor=1:Shrinkage=%f:"
+                               "NTrees=%i:BoostType=Grad:nCuts=-1:MaxDepth=%i:"
+                               "PruneMethod=NoPruning:UseWeightedTrees=%i"%(shrink,
+                                                                            trees,
+                                                                            max_depth,
+                                                                            weighted))"""
+    n_trees = (1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640)
+    max_depths = (1,2,3,4,5,6,7,8,9,10)
+    for trees,max_depth,weighted,shrink,nnodes in itertools.product(n_trees,
+                                                                    max_depths,
+                                                                    (1, 0),
+                                                                    (0.01,0.02,0.05,0.1,0.2,0.3,0.7,1.),
+                                                                    (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)):
+            factory.BookMethod(TMVA.Types.kBDT,
+                               "BDT_grad_%i_%i_%i_%i_%i"%(nnodes, trees, max_depth, weighted, shrink*100),
+                               "NNodesMax=%i:"
+                               "DoBoostMonitor=1:Shrinkage=%f:"
+                               "NTrees=%i:BoostType=Grad:nCuts=-1:MaxDepth=%i:"
+                               "PruneMethod=NoPruning:UseWeightedTrees=%i"%(nnodes,
+                                                                            shrink,
+                                                                            trees,
                                                                             max_depth,
                                                                             weighted))
     

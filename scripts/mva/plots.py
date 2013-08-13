@@ -234,10 +234,12 @@ if __name__ == "__main__":
     test = root_numpy.tree2rec(test_tree)
     train = root_numpy.tree2rec(train_tree)
 
-    draw_all(test, train)
+    bdt_name = "BDT_ada_640_2_1"
+    for bdt_name in (bdt_name, "BDT_grad_40_2_1", "BDT_random_320_2"):
+    #draw_all(test, train)
 
     #rank_all(test, sig_eff=0.9)
 
-    #draw_overtraining("BDT_ada", test, train)
-
-    #draw_roccurve("BDT_ada", test)
+        draw_overtraining(bdt_name, test, train)
+        
+        draw_roccurve(bdt_name, test)
