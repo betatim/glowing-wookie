@@ -1,12 +1,104 @@
+import os
 import operator
 import random
 random.seed(1234)
 
 from scipy.stats import ks_2samp
 import matplotlib.pylab as plt
+import numpy as np
 import root_numpy
 import ROOT as R
 
+p = os.path.dirname(__file__)
+p,_ = os.path.split(p)
+R.gROOT.ProcessLine(".x " +
+                    os.path.join(p, "lhcbstyle.C") +
+                    "+")
+
+def draw_roccurve(bdt_name, sample):
+    bg = sample[sample.classID==1][bdt_name]
+    sig = sample[sample.classID==0][bdt_name]
+
+    Nsig = len(sig)
+    Nbg = len(bg)
+    sig.sort()
+    bg.sort()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    bg_rejs = []
+    sig_effs = []
+    for sig_eff in np.arange(0., 1.01, 0.01):
+        # cut value is value at the 1-sig_eff
+        # entry in sig, this is approximate
+        idx = min(int(Nsig*(1-sig_eff)), Nsig-1)
+        cut_value = sig[idx]
+        Nsig_pass = (sig>cut_value).sum()
+        Nbg_pass = (bg>cut_value).sum()
+        s, b = (Nsig_pass/float(Nsig), Nbg_pass/float(Nbg))
+        #print "sig eff:%.4f bg rej:%.4f S/sqrt(B): %.2f"%(s, 1-b, s/np.sqrt(b))
+        bg_rejs.append(1-b)
+        sig_effs.append(s)
+
+    ax.plot(sig_effs, bg_rejs)
+    ax.set_xlabel("signal efficiency")
+    ax.set_ylabel("background rejection")
+    ax.grid()
+    plt.show()
+        
+    sig_effs.append(1.)
+    print "Area under ROC", np.sum(np.asarray(bg_rejs) * np.diff(np.asarray(sig_effs)))
+
+def draw_overtraining(bdt_name, test, train):
+    test_bg = test[test.classID==1]
+    test_sig = test[test.classID==0]
+    train_bg = train[train.classID==1]
+    train_sig = train[train.classID==0]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    low = min(test[bdt_name].min(), train[bdt_name].min())
+    high = max(test[bdt_name].max(), train[bdt_name].max())
+
+    print bdt_name, "signal",
+    print ks_2samp(test_sig[bdt_name], train_sig[bdt_name])[1]
+    print bdt_name, "background",
+    print ks_2samp(test_bg[bdt_name], train_bg[bdt_name])[1]
+    
+    ax.hist(train_bg[bdt_name],
+            bins=50,
+            normed=True,
+            range=(low,high),
+            label="training background",
+            color="blue",
+            alpha=0.75)
+    ax.hist(train_sig[bdt_name],
+            bins=50,
+            normed=True,
+            range=(low,high),
+            label="training signal",
+            color="red",
+            alpha=0.75)
+
+    y,binEdges = np.histogram(test_bg[bdt_name],
+                              bins=50,
+                              normed=True,
+                              range=(low,high))
+    bincenters = 0.5*(binEdges[1:]+binEdges[:-1])
+    ax.plot(bincenters, y, 'o', color="blue", label="test background")
+
+    y,binEdges = np.histogram(test_sig[bdt_name],
+                              bins=50,
+                              normed=True,
+                              range=(low,high))
+    bincenters = 0.5*(binEdges[1:]+binEdges[:-1])
+    ax.plot(bincenters, y, 'o', color="red", label="test signal")
+    ax.legend(loc=2)
+    ax.set_xlabel("BDT output")
+    ax.set_ylabel("Arbitrary units")
+    fig.savefig("/tmp/overtraining_%s.pdf"%(bdt_name))
 
 def draw_all(test, train):
     test_bg = test[test.classID==1]
@@ -142,6 +234,12 @@ if __name__ == "__main__":
     test = root_numpy.tree2rec(test_tree)
     train = root_numpy.tree2rec(train_tree)
 
-    draw_all(test, train)
+    bdt_name = "BDT_ada_640_2_1"
+    for bdt_name in (bdt_name, "BDT_grad_40_2_1", "BDT_random_320_2"):
+    #draw_all(test, train)
 
-    rank_all(test, sig_eff=0.9)
+    #rank_all(test, sig_eff=0.9)
+
+        draw_overtraining(bdt_name, test, train)
+        
+        draw_roccurve(bdt_name, test)

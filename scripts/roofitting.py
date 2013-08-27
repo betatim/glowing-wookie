@@ -41,7 +41,7 @@ index = w1.var("index")
 
 # Our data from the "detector"
 # let's pretend there is no signal
-w1.var("mu").setVal(0.0)
+w1.var("mu").setVal(0.)
 data = pdf.generate(R.RooArgSet(x, R.w1.index))
 data.SetName("data")
 w1_import(data)
