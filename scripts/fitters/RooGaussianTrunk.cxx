@@ -104,7 +104,7 @@ Double_t RooGaussianTrunk::analyticalIntegral(Int_t code, const char* rangeName)
     Double_t range_max = x.max(rangeName);
     if (range_min < min) { range_min = min; }
     if (range_max > max) { range_max = max; }
-    ret = rootPiBy2*sigma*(RooMath::erf((x.max(rangeName)-mean)/xscale)-RooMath::erf((x.min(rangeName)-mean)/xscale));
+    ret = rootPiBy2*sigma*(RooMath::erf((range_max-mean)/xscale)-RooMath::erf((range_min-mean)/xscale));
 //     cout << "Int_gauss_dx(mean=" << mean << ",sigma=" << sigma << ", xmin=" << x.min(rangeName) << ", xmax=" << x.max(rangeName) << ")=" << ret << endl ;
   } else if(code==2) {
     ret = rootPiBy2*sigma*(RooMath::erf((mean.max(rangeName)-x)/xscale)-RooMath::erf((mean.min(rangeName)-x)/xscale));
@@ -121,8 +121,8 @@ Double_t RooGaussianTrunk::analyticalIntegral(Int_t code, const char* rangeName)
 //_____________________________________________________________________________
 Int_t RooGaussianTrunk::getGenerator(const RooArgSet& directVars, RooArgSet &generateVars, Bool_t /*staticInitOK*/) const
 {
-  if (matchArgs(directVars,generateVars,x)) return 1 ;  
-  if (matchArgs(directVars,generateVars,mean)) return 2 ;  
+//   if (matchArgs(directVars,generateVars,x)) return 1 ;  
+//   if (matchArgs(directVars,generateVars,mean)) return 2 ;  
   return 0 ;
 }
 

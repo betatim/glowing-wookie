@@ -34,11 +34,11 @@ config = {
   'pipiFile': "/afs/cern.ch/work/t/tbird/demu/ntuples/pipi/strip_pipi_fitter.root",
   'mvaFile': "/afs/cern.ch/work/t/tbird/demu/ntuples/emu/mva_emu_fitter.root",
 
-  'mc': False,
+  'mode': "datapretoy",
   
   'pipiBR': [1.401e-3,0.026e-3],
   #          strip e|tr e
-  'emuEff': (3.1e-2 * 36.61e-2),
+  'emuEff': (3.1e-2 * .28),
   #           strip e|st pre|hlt2 p|  tr e  |  off e
   'pipiEff': (1.8e-2 * 0.5 * 0.03 * 15.44e-2 * 63.17e-2),
   
@@ -49,6 +49,7 @@ config = {
   'doBinned': True,
   'doBinnedNll': True,
   'doPlots': True,
+  'doLimits': True,
   'visError': False,
   'doGof': False,
   'doPlotsAsymLong': False,
@@ -105,11 +106,13 @@ gROOT.SetBatch(True)
 import ROOT
 from ROOT import TStopwatch, TFile, RooFit, RooAbsData, RooDataSet, RooDataHist
 from ROOT import RooCategory, RooArgSet, RooMsgService, RooCmdArg, RooLinkedList
+from ROOT import RooRandom
 
 timers = {
   "startup":TStopwatch(),
   "fitting":TStopwatch(),
   "plotting":TStopwatch(),
+  "limits":TStopwatch(),
   "nlls":TStopwatch(),
   "gof":TStopwatch(),
   "total":TStopwatch()
@@ -123,6 +126,7 @@ for k,v in syst.config.iteritems():
   config[k] = v
   
 from wookie.fitter.variableUtils import *
+import wookie.fitter.integral as pdfIntegrator
 import wookie.fitter.fullPdf as pdf
 
 w = pdf.setup_workspace(config)
@@ -135,9 +139,9 @@ Final_PDF = w.obj("Final_PDF")
 componantColours = [
     ["BDT1_Sig,BDT2_Sig,BDT3_Sig,PiPi_Sig", 16, ROOT.kSolid,16,1001],
     ["BDT1_Comb,BDT2_Comb,BDT3_Comb_Blind,PiPi_Comb", 14, 7],
-    ["BDT1_Prompt,BDT2_Prompt,BDT3_Prompt,PiPi_Prompt", ROOT.kRed+4, 4],
-    ["BDT1_MisId,BDT2_MisId,BDT3_MisId,PiPi_MisId", ROOT.kMagenta+2, ROOT.kSolid,0,0,1],
-    #["D0M_Bkg_Exp", ROOT.kGreen+4],
+    ["PiPi_Prompt", ROOT.kRed+4, 4],
+    ["PiPi_MisId", ROOT.kMagenta+2, ROOT.kSolid,0,0,1],
+    ["PiPi_MisId_Prompt", ROOT.kGreen+4],
     #["D0M_Bkg_Poly", ROOT.kGreen+2],
     ["*", ROOT.kBlue]
   ]
@@ -163,17 +167,15 @@ print ''
 
 
 
-
-#RooAbsData.setDefaultStorageType(RooAbsData.Tree);
-
-if not config['mc']:
-  pipiFile = TFile(config['pipiFile'],"OPEN")
-  pipiTree = pipiFile.Get("subTree")
-
+toyRatio = 1.
+if config['mode'] is "toy":
+  side = pdfIntegrator.calculate(w.obj("BDT_D0M_Bkg"),RooArgSet(w.obj("D0_M")))
+  sideBlind = pdfIntegrator.calculate(w.obj("BDT_D0M_Bkg"),RooArgSet(w.obj("D0_M")),"blinded")
+  toyRatio = side/sideBlind
+  print "emu background integrals:",(toyRatio,side,sideBlind)
 
 mvaFile = TFile(config['mvaFile'],"OPEN")
 mvaTree = mvaFile.Get("subTree")
-
 
 bdt1UnbDataSet = RooDataSet("bdt1UnbDataSet", "bdt1UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada<0 && Del_M>139.4")
 bdt1UnbDataSet.Print()
@@ -189,13 +191,38 @@ bdt2UnbPruneDataSet.Print()
 bdt3UnbPruneDataSet = RooDataSet("bdt3UnbPruneDataSet", "bdt3UnbPruneDataSet", bdt3UnbDataSet, w.set("argsBasic"), "")
 bdt3UnbPruneDataSet.Print()
 
-if not config['mc']:
+if config['mode'] is "data" or config['mode'] is "toy":
+  pipiFile = TFile(config['pipiFile'],"OPEN")
+  pipiTree = pipiFile.Get("subTree")
+  
   pipiUnbDataSet = RooDataSet("pipiUnbDataSet", "pipiUnbDataSet", pipiTree, w.set("argsPreCutPiPi"), "Del_M>139.4")
   pipiUnbDataSet.Print()
 
-  pipiUnbPruneDataSet = RooDataSet("pipiUnbPruneDataSet", "pipiUnbPruneDataSet", pipiUnbDataSet, w.set("argsBasic"), "D0_M>1798 && D0_M<1930")
+  pipiUnbPruneDataSet = RooDataSet("pipiUnbPruneDataSet", "pipiUnbPruneDataSet", pipiUnbDataSet, w.set("argsBasic"), "D0_M>1800 && D0_M<1930")
   pipiUnbPruneDataSet.Print()
+  
+  
+if config['mode'] is "toy":
+  print "Setting random seed to 1"
+  RooRandom.randomGenerator().SetSeed(1)
+  print "Generating dataset 1 ..."
+  bdt1UnbToyDataSet = w.obj("BDT1_Comb").generate(w.set("argsBasic"),int(round(toyRatio*bdt1UnbPruneDataSet.numEntries())))
+  print "Generating dataset 2 ..."
+  bdt2UnbToyDataSet = w.obj("BDT2_Comb").generate(w.set("argsBasic"),int(round(toyRatio*bdt2UnbPruneDataSet.numEntries())))
+  print "Generating dataset 3 ..."
+  bdt3UnbToyDataSet = w.obj("BDT3_Comb").generate(w.set("argsBasic"),int(round(toyRatio*bdt3UnbPruneDataSet.numEntries())))
 
+  fullUnbDataSet = RooDataSet("fullUnbDataSet",
+                              "fullUnbDataSet",
+                              w.set("argsBasic"),
+                              RooFit.Index(w.cat("DataSet")),
+                              RooFit.Import("BDT1",bdt1UnbToyDataSet),
+                              RooFit.Import("BDT2",bdt2UnbToyDataSet),
+                              RooFit.Import("BDT3",bdt3UnbToyDataSet),
+                              RooFit.Import("PiPi",pipiUnbPruneDataSet))
+
+  
+if config['mode'] is "data":
   fullUnbDataSet = RooDataSet("fullUnbDataSet",
                               "fullUnbDataSet",
                               w.set("argsBasic"),
@@ -204,7 +231,12 @@ if not config['mc']:
                               RooFit.Import("BDT2",bdt2UnbPruneDataSet),
                               RooFit.Import("BDT3",bdt3UnbPruneDataSet),
                               RooFit.Import("PiPi",pipiUnbPruneDataSet))
-else: 
+  
+  
+  
+  
+  
+if config['mode'] is "mc" or config['mode'] is "datapretoy":
   bdtEvents = []
   for ds in [bdt1UnbPruneDataSet,bdt2UnbPruneDataSet,bdt3UnbPruneDataSet]:
     bdtEvents.append(float(ds.numEntries()))
@@ -218,6 +250,8 @@ else:
                               RooFit.Import("BDT1",bdt1UnbPruneDataSet),
                               RooFit.Import("BDT2",bdt2UnbPruneDataSet),
                               RooFit.Import("BDT3",bdt3UnbPruneDataSet))
+  
+  
 
 fullUnbDataSet.Print()
 
@@ -230,10 +264,15 @@ bdt2UnbPruneDataSet.Delete()
 bdt3UnbPruneDataSet.Delete()
 mvaFile.Close()
 
-if not config['mc']:
+if config['mode'] is "data" or config['mode'] is "toy":
   pipiUnbDataSet.Delete()
   pipiUnbPruneDataSet.Delete()
   pipiFile.Close()
+
+if config['mode'] is "toy":
+  bdt1UnbToyDataSet.Delete()
+  bdt2UnbToyDataSet.Delete()
+  bdt3UnbToyDataSet.Delete()
 
 binnedDataSet = False
 fullDataSet = False
@@ -265,9 +304,11 @@ print "To MINUIT! Fitting to %s::%s at %s, saving result in %s" % (Final_PDF.Cla
 r=False
 if config['doFit']:
   if config['doBinned']:
-    r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
+    #r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
+    r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Optimize(1))
   else:
-    r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
+    #r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
+    r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Optimize(1))
   r.SetName("RooFitResults")
   getattr(w, 'import')(r)
 elif config['loadFit']:
@@ -275,7 +316,7 @@ elif config['loadFit']:
   r = fitResultsFile.Get("RooFitResults")
   fitResultsFile.Close()
 
-RooMsgService.instance().setGlobalKillBelow(RooFit.FATAL)
+#RooMsgService.instance().setGlobalKillBelow(RooFit.FATAL)
 
 
 if r:
@@ -317,12 +358,6 @@ timers["fitting"].Stop()
 timers["fitting"].Print()
 
 timers["plotting"].Start()
-
-
-
-
-
-
 
 #w.obj("D_DMASS_Ds").setBins(100)
 #w.obj("B_CORTAU").setBins(int(round(100*maxtau/5.)))
@@ -382,10 +417,15 @@ def ueberPlot(w,plotName,plotVar,cpus,mixState,massCat,cut,dataArr,varMax=-1,asy
   #elif mixState == "Neg":
     #oscSlice = RooFit.Slice(w.obj("Mu_CHARGE_CAT"),"negitive")
     
-  if config['mc']:
-    pdfName = "Sig"
-  else:
-    pdfName = "Final_PDF"
+  #if config['mode'] is "mc":
+    #pdfName = "Sig"
+  #elif config['mode'] is "datapretoy":
+    #pdfName = "Comb_Blind"
+  #elif config['mode'] is "toy":
+    #pdfName = "Final_PDF"
+  #elif config['mode'] is "data":
+    #pdfName = "Final_PDF"
+  pdfName = "Final_PDF"
     
   cpus = 1
 
@@ -419,10 +459,10 @@ def ueberPlot(w,plotName,plotVar,cpus,mixState,massCat,cut,dataArr,varMax=-1,asy
           arguments.Add(RooFit.NormRange(cut))
           #largePlotOn(TM_Total, frame, RooFit.ProjectionRange(cut), RooFit.NormRange(cut), RooFit.ProjWData(dataB), RooFit.NumCPU(nCPUs,kTRUE), RooFit.Components(component), RooFit.LineColor(lineColour), RooFit.LineStyle(lineStyle), RooFit.FillColor(fillColour), RooFit.FillStyle(fillStyle), RooFit.Precision(1e-4), visRooCmdArg, oscSlice)
           #TM_Total.plotOn(frame, RooFit.ProjectionRange(cut), RooFit.NormRange(cut), RooFit.ProjWData(dataB), RooFit.NumCPU(nCPUs,kTRUE), RooFit.Components(component), RooFit.LineColor(lineColour), RooFit.LineStyle(lineStyle), RooFit.FillColor(fillColour), RooFit.FillStyle(fillStyle), RooFit.DrawOption("F"), RooFit.Precision(1e-4), visRooCmdArg, oscSlice) #12 args
-          TM_Total.plotOn(frame, arguments)
+          Final_PDF.plotOn(frame, arguments)
         else:
           #TM_Total.plotOn(frame, RooFit.ProjWData(dataB), RooFit.NumCPU(nCPUs,kTRUE), RooFit.Components(component), RooFit.LineColor(lineColour), RooFit.LineStyle(lineStyle), RooFit.FillColor(fillColour), RooFit.FillStyle(fillStyle), RooFit.Precision(1e-4), visRooCmdArg, oscSlice) #10 args
-          TM_Total.plotOn(frame, arguments)
+          Final_PDF.plotOn(frame, arguments)
         dataB.Delete()
       else:
         if config['visError'] and (config['doFit'] or config['loadFit']):
@@ -459,10 +499,10 @@ def ueberPlot(w,plotName,plotVar,cpus,mixState,massCat,cut,dataArr,varMax=-1,asy
         arguments.Add(RooFit.NormRange(cut))
         arguments.Add(RooFit.ProjWData(dataB))
         #TM_Total.plotOn(frame, RooFit.Asymmetry(asymVar), RooFit.ProjectionRange(cut), RooFit.NormRange(cut), RooFit.ProjWData(dataB), RooFit.NumCPU(nCPUs,kTRUE), RooFit.LineColor(ROOT.kRed), RooFit.Precision(1e-4))
-        TM_Total.plotOn(frame, arguments)
+        Final_PDF.plotOn(frame, arguments)
       else:
         #TM_Total.plotOn(frame, RooFit.Asymmetry(asymVar), RooFit.ProjWData(dataB), RooFit.NumCPU(nCPUs,kTRUE), RooFit.LineColor(ROOT.kRed), RooFit.Precision(1e-4))
-        TM_Total.plotOn(frame, arguments)
+        Final_PDF.plotOn(frame, arguments)
       dataB.Delete()
     else:
       if cut != "":
@@ -493,6 +533,7 @@ def makePlotArray(q,w,plotName,plotVar,cpus,mixState,massCat,cut,dataArr,varMax=
   os.nice(config['niceness'])
   plot = [plotName,ueberPlot(w,plotName,plotVar,cpus,mixState,massCat,cut,dataArr,varMax,asym,numBins)]
   histNameSuffix = "" if asym == False else "_Asym["+asym.GetName()+"]"
+  #plot[1].Print("v")
   q.put([plot,
          [plotName+"_Pull",plot[1].pullHist("h_"+dataArr[-1].GetName()+histNameSuffix)]])
 
@@ -533,11 +574,17 @@ if config['doPlots']:
   timePlots = [plotData("D0_M",binnedDataSet),plotData("Del_M",binnedDataSet)]
   
   mixState = ""
+  
+  datacats = ['']
+  if config['mode'] is "data" or config['mode'] is "toy":
+    datacats = ["BDT1","BDT2","BDT3", "PiPi"]
+  if config['mode'] is "mc" or config['mode'] is "datapretoy":
+    datacats = ["BDT1","BDT2","BDT3"]
 
-  for datacat in (["BDT1","BDT2","BDT3", "PiPi"] if simultaneousFit else ['']):
+  for datacat in (datacats if simultaneousFit else ['']):
     for dsN,data in [("FullData",[binnedDataSet])]:
-      #for dst_side in ["", "delhigh", "delsig", "dellow"]:
-      for dst_side in [""]:
+      for dst_side in ["", "delhigh", "delsig", "dellow"]:
+      #for dst_side in [""]:
         for d_side in [""]:
           cutName = datacat+dst_side+d_side
           plotName = dsN + "_" + datacat + "_D0M_" + (dst_side if dst_side != "" else "delall") + "_" + (d_side if d_side != "" else "d0all")
@@ -546,8 +593,8 @@ if config['doPlots']:
 
     for dsN,data in [("FullData",[binnedDataSet])]:
       for dst_side in [""]:
-        #for d_side in ["", "dhigh", "dsig", "dlow"]:
-        for d_side in [""]:
+        for d_side in ["", "dhigh", "dsig", "dlow"]:
+        #for d_side in [""]:
           cutName = datacat+dst_side+d_side
           plotName = dsN + "_" + datacat + "_DelM_" + (dst_side if dst_side != "" else "delall") + "_" + (d_side if d_side != "" else "d0all")
           queueList.append(Queue())
@@ -586,10 +633,11 @@ if config['doPlots']:
 
 def nllPlot(var,dpll):
   nframe = var.frame(RooFit.Title("nll plot of " + var.GetName()))
-  arguments = RooLinkedList()
-  for arg in [RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kDashed)]:
-    arguments.Add(arg)
-  nll.plotOn(nframe,arguments)
+  #arguments = RooLinkedList()
+  #for arg in [RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kDashed)]:
+    #arguments.Add(arg)
+  #nll.plotOn(nframe,arguments)
+  nll.plotOn(nframe,RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kDashed))
   #nll.plotOn(nframe,RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kDashed))
   #nll.plotOn(nframe,RooFit.Precision(1e-4),RooFit.ShiftToZero(),RooFit.PrintEvalErrors(-1),RooFit.EvalErrorValue(nll.getVal()+10),RooFit.LineStyle(ROOT.kSolid))
   #nframe.GetYaxis().SetRangeUser(0,2000)
@@ -647,7 +695,10 @@ sys.stdout.flush()
 save_file = TFile.Open(config['outFileName'],"RECREATE")
 save_file.cd()
 for i in timePlots:
-  i[1].Write(i[0])
+  if not i[1]:
+    print "Plot ERROR!:", i
+  else:
+    i[1].Write(i[0])
 if config['doFit'] or config['loadFit']:
   if r:
     hcorr.Write("CorrelationHist")
@@ -661,9 +712,38 @@ save_file = False
 timers["plotting"].Stop()
 timers["plotting"].Print()
 
+timers["limits"].Start()
+
+if config['doLimits']:
+
+  if config['doBinned']:
+    data = fullDataSet
+  else:
+    data = fullUnbDataSet
+    
+  plh = ROOT.RooStats.ProfileLikelihoodCalculator(data, Final_PDF, RooArgSet(w.var("EMu_BR")))
+
+  #plh.SetConfidenceLevel(0.683)
+  plh.SetConfidenceLevel(0.90)
+  interval = plh.GetInterval()
+  print "90% CL interval for EMu_BR:"
+  print (interval.LowerLimit(w.var("EMu_BR")), interval.UpperLimit(w.var("EMu_BR")))
+
+  ## Now for some significance testing
+  ## background only model
+  #asym_calc = ROOT.RooStats.AsymptoticCalculator(data, Final_PDF, w.obj("Final_PDF_Background"))
+  #asym_calc.SetOneSidedDiscovery(True)
+  #result = asym_calc.GetHypoTest()
+  #result.Print()
+
+timers["limits"].Stop()
+timers["limits"].Print()
+
 timers["nlls"].Start()
 print "Starting nll plots"
 sys.stdout.flush()
+
+RooMsgService.instance().setGlobalKillBelow(RooFit.FATAL)
 
 if config['doNlls']:
   nll = False
@@ -694,7 +774,10 @@ if config['doPlots']:
 save_file = TFile.Open(config['outFileName'],"RECREATE")
 save_file.cd()
 for i in timePlots:
-  i[1].Write(i[0])
+  if not i[1]:
+    print "Plot ERROR!:", i
+  else:
+    i[1].Write(i[0])
 if config['doFit'] or config['loadFit']:
   if r:
     hcorr.Write("CorrelationHist")
@@ -833,7 +916,10 @@ if config['doGof']:
   save_file = TFile.Open(config['outFileName'],"RECREATE")
   save_file.cd()
   for i in timePlots:
-    i[1].Write(i[0])
+    if not i[1]:
+      print "Plot ERROR!:", i
+    else:
+      i[1].Write(i[0])
   #if doGof:
     #gofPlot.Write("Gof_LDist")
   if config['doFit'] or config['loadFit']:
@@ -864,7 +950,7 @@ else:
   sys.stdout.flush()
 
 
-for key in ['startup', 'fitting', 'plotting', 'gof', 'nlls', 'total']:
+for key in ['startup', 'fitting', 'plotting', 'limits', 'gof', 'nlls', 'total']:
   sys.stdout.write('{:<13}'.format(key+":"))
   timers[key].Print()
 
