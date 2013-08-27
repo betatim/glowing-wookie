@@ -31,9 +31,9 @@ l0_tc = TCanvas("l0_tc","l0_tc",800,600)
 l0_tc.SetBottomMargin(0.2)
 l0_tc.SetRightMargin(0.2)
 
-l0_re = re.compile("Dst_L0.*_(TIS|TOS)")
-hlt1_re = re.compile("Dst_Hlt1.*_(TIS|TOS)")
-hlt2_re = re.compile("Dst_Hlt2.*_(TIS|TOS)")
+l0_re = re.compile("Dst_L0.*_TOS")
+hlt1_re = re.compile("Dst_Hlt1.*_TOS")
+hlt2_re = re.compile("Dst_Hlt2.*_TOS")
 
 l0 = []
 hlt1 = []
@@ -49,16 +49,25 @@ for br in ttree.GetListOfBranches():
       hlt2.append(br_name)
     elif l0_re.match(br_name):
       l0.append(br_name)
-
+      
+#for arr,name,typ in [(l0,"L0","Global"), (hlt1,"Hlt1","Phys"), (hlt2,"Hlt2","Phys")]:
+  #arr.append("Dst_%s_TIS"%(name+typ))
 
 def combine_line_names(names):
   last_name = len(names) - 1
   cut = ""
   for i, name in enumerate(names):
-    if i is not last_name:
-      cut += name + " == 1 || "
+    prescale = get_prescale(name)
+    if prescale == 1.:
+      if i is not last_name:
+        cut += "(" + name + " == 1) || "
+      else:
+        cut += "(" + name + " == 1)"
     else:
-      cut += name + " == 1"
+      if i is not last_name:
+        cut += "(" + name + " == 1 && rndm() < " + str(prescale) + ") || "
+      else:
+        cut += "(" + name + " == 1 && rndm() < " + str(prescale) + ")"
   return cut
       
 def create_cut(levels):
@@ -76,11 +85,32 @@ def create_cut(levels):
       else:
         cut += "(" + level + ")"
   #print "       >>> ", cut, levels
+  #print cut
   return cut
       
 
 def calc_eff(triggers,total = 1.):
-  return ttree.Draw(br_name,create_cut(triggers))/total
+  return ttree.Draw("D0_M",create_cut(triggers))/total
+
+prescales = {
+  "Hlt2CharmHadD02HH_D02PiPiWideMass":0.1,
+  "Hlt2CharmHadD02HH_D02KPiWideMass":0.1,
+  "Hlt2CharmHadD02HH_D02KKWideMass":0.1,
+  "Hlt2Dst2PiD02KPi":0.01,
+  "Hlt2Dst2PiD02PiPi":0.03,
+  "Hlt2Dst2PiD02EMu":0.0,
+  "Hlt2Dst2PiD02KMu":0.15,
+}
+
+def get_prescale(line):
+  prescale = 1.
+  try:
+    prescale = prescales[line[4:-12]] # remove Dst_ and Decision_TOS
+  except KeyError:
+    pass
+  #print line, prescale
+  return prescale
+
 
 def find_most_useful(all_lines,best_lines,given_lines = None):
   best_line = ""
