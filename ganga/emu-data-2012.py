@@ -1,4 +1,5 @@
 import sys
+from Ganga.GPI import *
 if len(sys.argv) > 1:
   polarity = sys.argv[1]
 else:
@@ -11,7 +12,7 @@ else:
   test = False
   evtMax = -1
 
-j = Job(name="emu-2012-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="emu-data-2012-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
                         optsfile="../wookie/options_common.py", 
                         extraopts = """
@@ -29,7 +30,7 @@ execute(
                     )
 j.backend = Dirac()
 
-dataset = j.application.readInputData("../data/stripping20r0p1_%s.py"%polarity)
+dataset = j.application.readInputData("../data/stripping20r0p1_completecharm_%s.py"%polarity)
 
 
 n_files_per_job = int(len(dataset)/50.) # try to have around 50 jobs

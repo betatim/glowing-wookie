@@ -11,7 +11,7 @@ else:
   test = False
   evtMax = -1
 
-j = Job(name="pipi-data-stripped-mag%s%s"%(polarity, "-test" if test else ""))
+j = Job(name="pipi-data-2012-mag%s%s"%(polarity, "-test" if test else ""))
 j.application = DaVinci(version="v33r4",
                         optsfile="../wookie/options_common.py", 
                         extraopts = """
@@ -29,7 +29,7 @@ execute(
                     )
 j.backend = Dirac()
 
-dataset = j.application.readInputData("../data/stripping20_%s.py"%polarity)
+dataset = j.application.readInputData("../data/stripping20_completecharm_%s.py"%polarity)
 
 
 n_files_per_job = int(len(dataset)/50.) # try to have around 50 jobs
