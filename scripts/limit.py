@@ -16,7 +16,8 @@ n_tot_pipi = 15102431. # (down)
 n_tot_emu = 501396.  # (down)
 
 #n_pipi = 8.2733e+03
-n_pipi = 8.4571e+04
+#n_pipi = 8.4571e+04
+n_pipi = 51143 # (680e-6*.68*1.4e-3*3/1e-15)*1.8e-2 * 0.5 * 0.03 * 15.44e-2 * 63.17e-2
 
 
 #fc = TFeldmanCousins(.9)
@@ -26,8 +27,8 @@ n_pipi = 8.4571e+04
 
 tr = TRolke()
 #mid =1;
-x = 100;    # events in the signal region
-y = 100;    # events observed in the background region
+x = 50;    # events in the signal region
+y = 50;    # events observed in the background region
 tau = 1.;   # ratio between size of signal/background region
 m = int(n_tot_emu);    # MC events have been produced  (signal)
 z = int(n_tot_emu*e_emu);     # MC events have been observed (signal)     
