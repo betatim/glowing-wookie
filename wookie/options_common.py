@@ -430,7 +430,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
                       "TupleToolAngles",
                       "TupleToolPid",
                       "TupleToolDecay",
-                      "TupleToolGeneration",
+                      #"TupleToolGeneration",
                       "TupleToolTrigger",
                       "TupleToolTrackIsolation",
                       "TupleToolTrackInfo",
@@ -534,9 +534,12 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     "Hlt2TopoOSTF4BodyDecision",
     "Hlt2diphotonDiMuonDecision",
     "Hlt2UnbiasedDiMuonLowMassDecision",
-    "Hlt2CharmHadD02HH_D02KPiWideMassDecision",
     "Hlt2CharmHadD02HH_D02PiPiDecision",
-    "Hlt2CharmHadD02HH_D02PiPiWideMassDecision"
+    "Hlt2CharmHadD02HH_D02PiPiWideMassDecision",
+    "Hlt2CharmHadD02HH_D02KPiDecision",
+    "Hlt2CharmHadD02HH_D02KPiWideMassDecision",
+    "Hlt2CharmHadD02HH_D02KKDecision",
+    "Hlt2CharmHadD02HH_D02KKWideMassDecision",
     ]
 
   D_variables = {"DIRA": "BPVDIRA",
@@ -576,11 +579,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   LoKi_pi = LoKi__Hybrid__TupleTool("LoKi_pi")
   LoKi_pi.Variables = lepton_variables
   dttuple.pi.addTool(LoKi_pi)
-  dttuple.pi.addTool(TupleToolDecayTreeFitter("PVFit"))
-  dttuple.pi.PVFit.Verbose = True
-  dttuple.pi.PVFit.constrainToOriginVertex = True
-  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi",
-                          "TupleToolDecayTreeFitter/PVFitpi"]
+  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi"]
 
   dttuple.addTool(TupleToolDecay, name="D0")
   LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
@@ -597,7 +596,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFit"))
   dttuple.Dst.PVFit.Verbose = True
   dttuple.Dst.PVFit.constrainToOriginVertex = True
-  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFitDst"]
+  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFit"]
 
 
   if "MC" in dataType:
