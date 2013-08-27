@@ -1,2 +1,7 @@
 *.pdf
+*swp
+*~
+*.tmp
+*.bak
+*.backup
 gmon.out
