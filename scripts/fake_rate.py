@@ -27,20 +27,20 @@ class Particle(object):
         p_bin_boundaries = array("d", (5,10,12,14,16,18,20,22,25,28,32,38,45,55,70,100))
         p_bins = (len(p_bin_boundaries)-1, p_bin_boundaries)
         
-        self.pt_eta_all = R.TH2F("%s_%s_pt_eta_all"%(species, name),
+        self.pt_eta_all = R.TH2F("%s_to_%s_pt_eta_all"%(species, name),
                                  ";pt;eta", *(pt_bins+eta_bins))
-        self.pt_eta_pass = R.TH2F("%s_%s_pt_eta_pass"%(species, name),
+        self.pt_eta_pass = R.TH2F("%s_to_%s_pt_eta_pass"%(species, name),
                                   ";pt;eta", *(pt_bins+eta_bins))
 
-        self.p_eta_all = R.TH2F("%s_%s_p_eta_all"%(species, name),
+        self.p_eta_all = R.TH2F("%s_to_%s_p_eta_all"%(species, name),
                                 ";p;eta", *(p_bins+eta_bins))
-        self.p_eta_pass = R.TH2F("%s_%s_p_eta_pass"%(species, name),
+        self.p_eta_pass = R.TH2F("%s_to_%s_p_eta_pass"%(species, name),
                                  ";p;eta", *(p_bins+eta_bins))
 
-        self.phi_eta_all = R.TH2F("%s_%s_phi_eta_all"%(species, name),
-                                  ";phi;eta", 15,0,2*math.pi, *eta_bins)
-        self.phi_eta_pass = R.TH2F("%s_%s_phi_eta_pass"%(species, name),
-                                   ";phi;eta", 15,0,2*math.pi, *eta_bins)
+        self.p_pt_all = R.TH2F("%s_to_%s_p_pt_all"%(species, name),
+                               ";p;pt", *(p_bins+pt_bins))
+        self.p_pt_pass = R.TH2F("%s_to_%s_p_pt_pass"%(species, name),
+                                ";p;pt", *(p_bins+pt_bins))
 
     def eval_efficiency(self, event):
         eta = event.getRealValue(self.species + "_Eta")
@@ -51,27 +51,34 @@ class Particle(object):
         
         self.pt_eta_all.Fill(pt, eta, w)
         self.p_eta_all.Fill(p, eta, w)
+        self.p_pt_all.Fill(p, pt, w)
         if self.pid_cut(event):
             self.pt_eta_pass.Fill(pt, eta, w)
             self.p_eta_pass.Fill(p, eta, w)
+            self.p_pt_all.Fill(p, pt, w)
 
-    def save_histograms(self):
-        f = R.TFile(config.workingpath + self.name + ".root", "RECREATE")
+    def save_histograms(self, file_name):
+        f = R.TFile(file_name, "UPDATE")
         for h1,h2 in ((self.pt_eta_all,self.pt_eta_pass),
                       (self.p_eta_all,self.p_eta_pass),
                       (self.phi_eta_all,self.phi_eta_pass)):
             h1.Write()
             h2.Write()
             eff = h1.Clone(h1.GetName().replace("all", "") + "fake_rate")
-            eff.SetTitle(self.species + " fake rate for ")
+            eff.SetTitle(self.species + " to %s fake rate"%(self.name))
             eff.Divide(h2, h1, 1,1,"B")
             eff.Write()
             
         f.Close()
 
 def fake_rate(working_points):
+    # XXX Need a more sophisticated way to select
+    # XXX the input files, checking they exist etc
     fname = "/castor/cern.ch/grid/lhcb/user/p/powell/CalibData/Reco14_DATA/MagUp/DSt_%s_MagUp_Strip20_%i.root"
-    # assume all working points have the same species
+
+    # all workping points must use the same species
+    assert(len(set([wp.species for wp in working_points])) == 1)
+    
     fnames = [fname%(working_points[0].species, n) for n in xrange(10)]
 
     for fname in fnames:
@@ -90,28 +97,29 @@ def fake_rate(working_points):
 
         f.Close()
 
-    for wp in working_points:
-        wp.save_histograms()
-
 def PIDe_cutter(species, val):
     def _f(d):
         return d.getRealValue(species + "_CombDLLe") > val
     return _f
 def MuonPID(species, val):
     def _f(d):
-        return (d.getRealValue(species + "_isMuon") == 1 and
-                d.getRealValue(species + "_CombDLLmu") > val)
+        return ((d.getRealValue(species + "_IsMuon") == 1) and
+                (d.getRealValue(species + "_CombDLLmu") > val))
     return _f
 def B2emuMuon(species):
     def _f(d):
-        return (d.getRealValue(species + "_isMuon") == 1 and
-                d.getRealValue(species + "_CombDLLK") < 10 and
-                d.getRealValue(species + "_CombDLLmu") > -5)
+        return ((d.getRealValue(species + "_IsMuon") == 1) and
+                (d.getRealValue(species + "_CombDLLK") < 10) and
+                (d.getRealValue(species + "_CombDLLmu") > -5))
     return _f
 
 wp1 = Particle("loose_electron", PIDe_cutter("Pi", -1))
 wp2 = Particle("tight_electron", PIDe_cutter("Pi", 3))
 wp3 = Particle("basic_muon", MuonPID("Pi", 0))
 wp4 = Particle("B2emu_muon", B2emuMuon("Pi"))
+wps = [wp1, wp2, wp3, wp4]
 
-fake_rate([wp1, wp2, wp3, wp4])
+fake_rate(wps)
+for wp in wps:
+    wp.save_histograms(config.workingpath + "fake_rates.root")
+
