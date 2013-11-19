@@ -36,7 +36,7 @@
 
 
 
-
+import sys
             
 def monHist(name,binMin=0.,binMax=5000.,prefix=""):
   safe = name
@@ -119,7 +119,97 @@ def local_line(config, xplus = "e", xminus = "mu"):
   line_box = StrippingLine(config['prefix']+"Dst2PiD02"+combname+"Line",
                             algos = [ tag_sel ], prescale = 1.)
 
-  return line_box
+  return line_box, tag_sel
+
+
+
+def likesign_line(config, xplus = "e", xminus = "mu"):
+  from StrippingConf.StrippingLine import StrippingLine
+  from Configurables import CombineParticles
+  from PhysSelPython.Wrappers import DataOnDemand, Selection
+  
+  config['prefix'] = "Ls" + config['prefix']
+  name = "DstarD02xxLs"
+  
+  if(xplus == "mu") and (xminus == "mu") :                                     
+      d0comb_combcut =       "(AMAXDOCA('')< %(doca)s *mm) & (DAMASS('D0')< %(DMassWinMuMuHigh)s *MeV) & (DAMASS('D0')> %(DMassWinMuMuLow)s *MeV) & (AMAXCHILD(PT)>%(XmaxPT)s *MeV) & (APT> %(D0MinPT)s)"
+  elif (((xplus == "mu") and (xminus == "e")) or ((xplus == "e") and (xminus == "mu"))) :
+      d0comb_combcut =       "(AMAXDOCA('')< %(doca)s *mm) & (ADAMASS('D0')< %(DMassWinEMu)s *MeV) & (AMAXCHILD(PT)>%(XmaxPT)s *MeV) & (APT> %(D0MinPT)s)"
+  else :
+      d0comb_combcut =       "(AMAXDOCA('')< %(doca)s *mm) & (ADAMASS('D0')< %(DMassWin)s *MeV) & (AMAXCHILD(PT)>%(XmaxPT)s *MeV) & (APT> %(D0MinPT)s)"
+      
+  d0comb_childcut = "(PT> %(XminPT)s *MeV) & (P>%(XminP)s *MeV) & (TRCHI2DOF<%(XTrackChi2)s) & (MIPCHI2DV(PRIMARY)> %(XminIPChi2)s) & ( TRGHOSTPROB < %(ghostProbCut)s )" 
+  d0comb_d0cut = "(BPVDIRA> %(DDira)s) & (INGENERATION( (MIPCHI2DV(PRIMARY)>%(XmaxIPChi2)s),1 ) ) & (BPVVDCHI2> %(DMinFlightChi2)s) & (MIPCHI2DV(PRIMARY)< %(DMaxIPChi2)s) & (VFASPF(VCHI2/VDOF)< %(DVChi2)s)"
+  xx_name = "D02"+xplus+xminus+"forTag"
+  xx_comb = CombineParticles( config['prefix']+xx_name )
+
+  inputLoc = {
+       "pi" : "Phys/StdAllNoPIDsPions/Particles"
+      ,"mu" : "Phys/StdAllLooseMuons/Particles"
+      ,"K" : "Phys/StdAllLooseKaons/Particles"
+      ,"e" : "Phys/StdAllLooseElectrons/Particles"
+      }
+  req_sel = []
+  if xplus != xminus :
+      decays = ["D0 -> "+ xplus + "+ " + xminus + "+ ", "D0 -> "+ xplus + "- " + xminus + "- " ]
+      xx_comb.DecayDescriptors =  decays
+      xx_comb.DaughtersCuts = { xplus+"+" : d0comb_childcut % config
+                                , xminus+"+" : d0comb_childcut % config }
+      req_sel.append(DataOnDemand(Location = inputLoc[xplus]))
+      req_sel.append(DataOnDemand(Location = inputLoc[xminus]))
+  else:
+      decay = "D0 -> "+ xplus + "+ " + xminus + "+ "
+      xx_comb.DecayDescriptor =  decay
+      xx_comb.DaughtersCuts = { xplus+"+" : d0comb_childcut % config }
+      req_sel.append(DataOnDemand(Location = inputLoc[xplus]))
+  xx_comb.MotherCut = d0comb_d0cut  % config
+  xx_comb.CombinationCut = d0comb_combcut % config
+
+  xxCombSel = Selection (name+"seq_"+xx_name+"_selection", Algorithm = xx_comb, RequiredSelections = req_sel)
+        
+  
+  from Configurables import CombineParticles
+  dstcomb_dstcut       =  "(abs(M-MAXTREE('D0'==ABSID,M)-145.42) < %(DstD0DMWin)s ) & (VFASPF(VCHI2/VDOF)< %(DVChi2)s)"
+  dstcomb_combcut =  "(ADAMASS('D*(2010)+')<%(DstMassWin)s * MeV)"
+  dstcomb_picut = "(PT> %(PiMinPT)s * MeV) &  ( MIPCHI2DV(PRIMARY)< %(PiMaxIPCHI2)s) & (TRCHI2DOF<%(XTrackChi2Pi)s) "
+  dstcomb_d0cut = "PT>0"
+  
+  dstar = CombineParticles( config['prefix']+"combine" )
+  #dstar.DecayDescriptors = ['[D*(2010)+ -> D0 pi+]cc']
+  dstar.DecayDescriptors = ['D*(2010)+ -> D0 pi+', 'D*(2010)- -> D0 pi-']
+  dstar.DaughtersCuts = {    "pi+" : dstcomb_picut % config ,
+                              "D0"    : dstcomb_d0cut % config
+                              }
+  dstar.CombinationCut = dstcomb_combcut % config
+  dstar.MotherCut =  dstcomb_dstcut % config
+        
+        
+  combname = xplus+xminus
+  dstar_box = dstar.clone(name+config['prefix']+"Dst2PiD02"+combname+"D0PiComb" )
+  dst_req_sel = [DataOnDemand( "Phys/StdAllNoPIDsPions/Particles" ) ,
+                  DataOnDemand( "Phys/StdNoPIDsUpPions/Particles"),
+                  xxCombSel]
+  
+  pres = "Prescale"+combname+"Box"
+  _tag_sel = Selection (name+"_seq_"+combname+"_box",
+                        Algorithm = dstar_box,
+                        RequiredSelections = dst_req_sel)####
+  
+  # Capitalize particle names to match Hlt2 D*->pi D0-> xx lines
+  Xplus  = xplus[0].upper() + xplus[1:]    
+  Xminus = xminus[0].upper() + xminus[1:]
+
+  if (xplus == "e" and xminus =="mu") or (xplus == "mu" and xminus == "e"):
+      line_box = StrippingLine(name+config['prefix']+"Dst2PiD02"+combname+"Box",
+                                algos = [ _tag_sel ],
+                                prescale = 1.)
+      
+  else:
+      hltname = "Hlt2Dst2PiD02"+Xplus+Xminus+"*Decision"  # * matches Signal, Sidebands and Box lines
+      line_box = StrippingLine(name+config['prefix']+"Dst2PiD02"+combname+"Box",
+                                HLT = "HLT_PASS_RE('"+hltname+"')",
+                                algos = [ _tag_sel ], prescale = 1.)
+  return line_box, _tag_sel
 
 
 
@@ -127,13 +217,11 @@ def local_line(config, xplus = "e", xminus = "mu"):
 
 
 
+from Gaudi.Configuration import *
+from LHCbKernel.Configuration import *
 
 
-
-
-
-
-def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleDecay, evtMax, mag):
+def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleDecay, evtMax, mag, outputType="ntuple"):
   
   #0 "pi" "pi"
   #1 "mu" "mu"
@@ -154,8 +242,6 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
 
 
 
-  from Gaudi.Configuration import *
-  from LHCbKernel.Configuration import *
   from Configurables import FilterDesktop, CombineParticles
   from PhysSelPython.Wrappers import Selection, DataOnDemand
   from StrippingConf.StrippingLine import StrippingLine
@@ -242,6 +328,8 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
 
 
   ### CharmFromBSemi module
+  
+  selection = False
 
   from StrippingSelections import StrippingDstarD02xx
   line = False
@@ -251,9 +339,19 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     stripOutputLoc = line.outputLocations()[lineNumber]
   elif stripConf == "min" or stripConf == "minimal" :
     if stripLine == "emu":
-      line = local_line(config, "mu","e")
+      line, selection = local_line(config, "mu","e")
     elif stripLine == "pipi":
-      line = local_line(config, "pi","pi")
+      line, selection = local_line(config, "pi","pi")
+    else:
+      sys.exit("not implemented")
+    ss.appendLines( [line] )
+    #stripOutputLoc = "Phys/"+config['prefix']+"Dst2PiD02"+combname+"Line"+"/Particles"
+    stripOutputLoc = line.outputLocation()
+  elif stripConf == "ls" or stripConf == "likesign" :
+    if stripLine == "emu":
+      line, selection = likesign_line(StrippingDstarD02xx.config_default, "e","mu")
+    elif stripLine == "pipi":
+      line, selection = likesign_line(StrippingDstarD02xx.config_default, "pi","pi")
     else:
       sys.exit("not implemented")
     ss.appendLines( [line] )
@@ -304,12 +402,10 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   blind_Filter = FilterDesktop('blind_Filter', 
       Code = """( CHILDCUT ( 'D0' == ABSID , 1 ) & (( CHILD(M,1)<1700*MeV) | (CHILD(M,1)>1900*MeV)) ) | ( CHILDCUT ( 'D0' == ABSID , 2 ) & (( CHILD(M,2)<1700*MeV) | (CHILD(M,2)>1900*MeV)) )""")
 
-  # make a Selection
   blind_FilterSel = Selection(name = 'blind_FilterSel',
                             Algorithm = blind_Filter,
                             RequiredSelections = [ blind_Sel ])
 
-  # build the SelectionSequence
   blind_Seq = SelectionSequence('blind_Seq',
                               TopSelection = blind_FilterSel,
                               )
@@ -354,7 +450,12 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   DaVinci().EvtMax = evtMax
   #DaVinci().EvtMax = -1
   #DaVinci().EventPreFilters = [ filterHLT ]
-  DaVinci().appendToMainSequence( [ MakeParticles ] )
+  storeExp = StoreExplorerAlg()
+  storeExp.Load = 1
+  storeExp.PrintFreq = 5.0
+
+  DaVinci().appendToMainSequence( [ storeExp ] )
+  #DaVinci().appendToMainSequence( [ MakeParticles ] )
   if stripRun:
     DaVinci().appendToMainSequence( [ conf.sequence() ] )
     DaVinci().appendToMainSequence( [ sr ] )
@@ -400,7 +501,7 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     elif mag == "down":
       DaVinci().CondDBtag = "Sim08-20130503-1-vc-md100"
     DaVinci().Lumi = False
-  elif dataType == "data":
+  elif dataType == "data2012":
     DaVinci().DataType = "2012"
     DaVinci().Simulation = False
     DaVinci().DDDBtag = "dddb-20130111"
@@ -409,6 +510,18 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
     elif mag == "down":
       DaVinci().CondDBtag = "cond-20130114"
     DaVinci().Lumi = True
+  elif dataType == "data2011":
+    DaVinci().DataType = "2011"
+    DaVinci().Simulation = False
+    DaVinci().DDDBtag = "dddb-20130111"
+    if mag == "up":
+      DaVinci().CondDBtag = "cond-20130114"
+    elif mag == "down":
+      DaVinci().CondDBtag = "cond-20130114"
+    DaVinci().Lumi = True
+  elif dataType == "data":
+    sys.exit("correct the dataType to include the year")
+  
 
   from Configurables import DecayTreeTuple, TupleToolDecay, TupleToolMCTruth, TupleToolMCBackgroundInfo, MCTupleToolHierarchy, TupleToolTrigger, TupleToolTISTOS, TupleToolPropertime, PropertimeFitter, TupleToolKinematic, TupleToolGeometry, TupleToolEventInfo, TupleToolPrimaries, TupleToolPid, TupleToolTrackInfo, TupleToolRecoStats
 
@@ -416,206 +529,262 @@ def execute(stripRun, stripConf, stripLine, dataType, blinded, hltReport, tupleD
   from Configurables import LoKi__Hybrid__TupleTool, FitDecayTrees, TupleToolDecayTreeFitter
   import GaudiKernel.SystemOfUnits as Units
 
+  if outputType in ["ntuple", "nt", "tuple", "root"]:
+    dttuple = DecayTreeTuple( "Demu_NTuple" )
 
-  dttuple = DecayTreeTuple( "Demu_NTuple" )
-
-  dttuple.ToolList = ["TupleToolGeometry",
-                      "TupleToolEventInfo",
-                      "TupleToolGeometry",
-                      "TupleToolKinematic",
-                      "TupleToolPid",
-                      "TupleToolPrimaries",
-                      "TupleToolPropertime",
-                      "TupleToolTrackInfo",
-                      "TupleToolAngles",
-                      "TupleToolPid",
-                      "TupleToolDecay",
-                      #"TupleToolGeneration",
-                      "TupleToolTrigger",
-                      "TupleToolTrackIsolation",
-                      "TupleToolTrackInfo",
-                      "TupleToolTrackPosition",
-                      "TupleToolBremInfo",
-                      "TupleToolTrigger",
-                      "TupleToolTISTOS",
-                      "TupleToolTrackInfo",
-                      "TupleToolRecoStats",
-                      "TupleToolDira",
-                      ]
-  if blinded:
-    dttuple.Inputs = blind_Seq.outputLocations()#[ "Phys/DstarD02xxDst2PiD02pipiBox/Particles" ]
-  elif stripRun:
-    dttuple.Inputs = [ stripOutputLoc ]
-  else:
-    dttuple.Inputs = ["/Event/CharmCompleteEvent/" + stripOutputLoc ]
-    #dttuple.Inputs = ["/Event/CharmCompleteEvent/Phys/DstarD02xxDst2PiD02emuBox/Particles" ]
+    dttuple.ToolList = ["TupleToolGeometry",
+                        "TupleToolEventInfo",
+                        "TupleToolGeometry",
+                        "TupleToolKinematic",
+                        "TupleToolPid",
+                        "TupleToolPrimaries",
+                        "TupleToolPropertime",
+                        "TupleToolTrackInfo",
+                        "TupleToolAngles",
+                        "TupleToolPid",
+                        "TupleToolDecay",
+                        #"TupleToolGeneration",
+                        "TupleToolTrigger",
+                        "TupleToolTrackIsolation",
+                        "TupleToolTrackInfo",
+                        "TupleToolTrackPosition",
+                        "TupleToolBremInfo",
+                        "TupleToolTrigger",
+                        "TupleToolTISTOS",
+                        "TupleToolTrackInfo",
+                        "TupleToolRecoStats",
+                        "TupleToolDira",
+                        ]
+    if blinded:
+      dttuple.Inputs = blind_Seq.outputLocations()
+    elif stripRun:
+      dttuple.Inputs = [ stripOutputLoc ]
+    elif not stripRun and (stripConf == "ls" or stripConf == "likesign"):
+      dttuple.Inputs = [ "lsdata/"+stripOutputLoc, "lsdata/Phys/dst_FilterSel/Particles" ]
+      #dttuple.Inputs = [ stripOutputLoc ]
+      #dttuple.Inputs = [ "/Event/CharmCompleteEvent/" + stripOutputLoc ]
+      #dttuple.Inputs = [ "lsdata/Phys/dst_FilterSel/Particles" ]
+      #dttuple.Inputs = [ "/Event/lsdata/Phys/DstarD02xxLsseq_D02emuforTag_selection/Particles" ]
+      #/DstarD02xxLsseq_D02emuforTag_selection
+    else:
+      dttuple.Inputs = [ "/Event/CharmCompleteEvent/" + stripOutputLoc ]
+      #dttuple.Inputs = ["/Event/CharmCompleteEvent/Phys/DstarD02xxDst2PiD02emuBox/Particles" ]
+      
+    print "tuple input :",dttuple.Inputs
+    print "number of events:", DaVinci().EvtMax
     
-  print "tuple input :",dttuple.Inputs
-  print "number of events:", DaVinci().EvtMax
-  
-  if tupleDecay == "ls":
-    dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^e+ ^mu+]cc) ^pi+]cc"
-    dttuple.Branches = {
-      "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [e+ mu+]cc) pi+]cc",
-      "D0":  "[D*(2010)+ -> ([^D0]cc -> [e+ mu+]cc) pi+]cc",
-      "x1":  "[D*(2010)+ -> ([D0]cc -> [^e+ mu+]cc) pi+]cc",
-      "x2":  "[D*(2010)+ -> ([D0]cc -> [e+ ^mu+]cc) pi+]cc",
-      "pi":  "[D*(2010)+ -> ([D0]cc -> [e+ mu+]cc) ^pi+]cc"
-      }
-  elif tupleDecay == "emu":
-    dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^e-]cc [^mu+]cc) ^pi+]cc"
-    dttuple.Branches = {
-      "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [e-]cc [mu+]cc) pi+]cc",
-      "D0":  "[D*(2010)+ -> ([^D0]cc -> [e-]cc [mu+]cc) pi+]cc",
-      "x1":  "[D*(2010)+ -> ([D0]cc -> [^e-]cc [mu+]cc) pi+]cc",
-      "x2":  "[D*(2010)+ -> ([D0]cc -> [e-]cc [^mu+]cc) pi+]cc",
-      "pi":  "[D*(2010)+ -> ([D0]cc -> [e-]cc [mu+]cc) ^pi+]cc"
-      }
+    if tupleDecay == "lsemu":
+      dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^e+ ^mu+]cc) ^pi+]cc"
+      dttuple.Branches = {
+        "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [e+ mu+]cc) pi+]cc",
+        "D0":  "[D*(2010)+ -> ([^D0]cc -> [e+ mu+]cc) pi+]cc",
+        "x1":  "[D*(2010)+ -> ([D0]cc -> [^e+ mu+]cc) pi+]cc",
+        "x2":  "[D*(2010)+ -> ([D0]cc -> [e+ ^mu+]cc) pi+]cc",
+        "pi":  "[D*(2010)+ -> ([D0]cc -> [e+ mu+]cc) ^pi+]cc"
+        }
+    elif tupleDecay == "emu":
+      dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^e-]cc [^mu+]cc) ^pi+]cc"
+      dttuple.Branches = {
+        "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [e-]cc [mu+]cc) pi+]cc",
+        "D0":  "[D*(2010)+ -> ([^D0]cc -> [e-]cc [mu+]cc) pi+]cc",
+        "x1":  "[D*(2010)+ -> ([D0]cc -> [^e-]cc [mu+]cc) pi+]cc",
+        "x2":  "[D*(2010)+ -> ([D0]cc -> [e-]cc [^mu+]cc) pi+]cc",
+        "pi":  "[D*(2010)+ -> ([D0]cc -> [e-]cc [mu+]cc) ^pi+]cc"
+        }
+      
+    elif tupleDecay == "kpi":
+      dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^K-]cc [^pi+]cc) ^pi+]cc"
+      dttuple.Branches = {
+        "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [K-]cc [pi+]cc) pi+]cc",
+        "D0":  "[D*(2010)+ -> ([^D0]cc -> [K-]cc [pi+]cc) pi+]cc",
+        "x1":  "[D*(2010)+ -> ([D0]cc -> [^K-]cc [pi+]cc) pi+]cc",
+        "x2":  "[D*(2010)+ -> ([D0]cc -> [K-]cc [^pi+]cc) pi+]cc",
+        "pi":  "[D*(2010)+ -> ([D0]cc -> [K-]cc [pi+]cc) ^pi+]cc"
+        }
+      
+    elif tupleDecay == "pipi":
+      dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^pi-]cc [^pi+]cc) ^pi+]cc"
+      dttuple.Branches = {
+        "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [pi-]cc [pi+]cc) pi+]cc",
+        "D0":  "[D*(2010)+ -> ([^D0]cc -> [pi-]cc [pi+]cc) pi+]cc",
+        "x1":  "[D*(2010)+ -> ([D0]cc -> [^pi-]cc [pi+]cc) pi+]cc",
+        "x2":  "[D*(2010)+ -> ([D0]cc -> [pi-]cc [^pi+]cc) pi+]cc",
+        "pi":  "[D*(2010)+ -> ([D0]cc -> [pi-]cc [pi+]cc) ^pi+]cc"
+        }
+      
+    elif tupleDecay == "mumu":
+      dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^mu-]cc [^mu+]cc) ^pi+]cc"
+      dttuple.Branches = {
+        "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [mu-]cc [mu+]cc) pi+]cc",
+        "D0":  "[D*(2010)+ -> ([^D0]cc -> [mu-]cc [mu+]cc) pi+]cc",
+        "x1":  "[D*(2010)+ -> ([D0]cc -> [^mu-]cc [mu+]cc) pi+]cc",
+        "x2":  "[D*(2010)+ -> ([D0]cc -> [mu-]cc [^mu+]cc) pi+]cc",
+        "pi":  "[D*(2010)+ -> ([D0]cc -> [mu-]cc [mu+]cc) ^pi+]cc"
+        }
+
+
+    dttuple.TupleName = "Demu_NTuple"
     
-  elif tupleDecay == "pipi":
-    dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^pi-]cc [^pi+]cc) ^pi+]cc"
-    dttuple.Branches = {
-      "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [pi-]cc [pi+]cc) pi+]cc",
-      "D0":  "[D*(2010)+ -> ([^D0]cc -> [pi-]cc [pi+]cc) pi+]cc",
-      "x1":  "[D*(2010)+ -> ([D0]cc -> [^pi-]cc [pi+]cc) pi+]cc",
-      "x2":  "[D*(2010)+ -> ([D0]cc -> [pi-]cc [^pi+]cc) pi+]cc",
-      "pi":  "[D*(2010)+ -> ([D0]cc -> [pi-]cc [pi+]cc) ^pi+]cc"
-      }
+    dttuple.addTool(TupleToolPropertime())
+    dttuple.addTool(TupleToolTISTOS())
+    dttuple.TupleToolTISTOS.VerboseL0 = True
+    dttuple.TupleToolTISTOS.VerboseHlt1 = True
+    dttuple.TupleToolTISTOS.VerboseHlt2 = True
+    dttuple.TupleToolTISTOS.Verbose = True
     
-  elif tupleDecay == "mumu":
-    dttuple.Decay = "[D*(2010)+ -> ([^D0]cc -> [^mu-]cc [^mu+]cc) ^pi+]cc"
-    dttuple.Branches = {
-      "Dst": "[D*(2010)+]cc: [D*(2010)+ -> ([D0]cc -> [mu-]cc [mu+]cc) pi+]cc",
-      "D0":  "[D*(2010)+ -> ([^D0]cc -> [mu-]cc [mu+]cc) pi+]cc",
-      "x1":  "[D*(2010)+ -> ([D0]cc -> [^mu-]cc [mu+]cc) pi+]cc",
-      "x2":  "[D*(2010)+ -> ([D0]cc -> [mu-]cc [^mu+]cc) pi+]cc",
-      "pi":  "[D*(2010)+ -> ([D0]cc -> [mu-]cc [mu+]cc) ^pi+]cc"
-      }
+    if "ls" not in tupleDecay:
+      dttuple.TupleToolTISTOS.TriggerList = [
+        ##"L0Global",
+        #"L0DiMuonDecision",
+        "L0MuonDecision",
+        "L0ElectronDecision",
+        "L0HadronDecision",
+        #"L0MuonHighDecision",
+        #"L0PhotonDecision",
+        ##"Hlt1Global",
+        "Hlt1TrackMuonDecision",
+        "Hlt1TrackAllL0Decision",
+        #"Hlt1SingleMuonNoIPL0Decision",
+        #"Hlt1SingleMuonNoIPL0HighPTDecision",
+        ##"Hlt2Global",
+        #"Hlt2Dst2PiD02EMuDecision",
+        #"Hlt2Dst2PiD02KMuDecision",
+        #"Hlt2Dst2PiD02KPiDecision",
+        #"Hlt2Dst2PiD02MuMuDecision",
+        #"Hlt2Dst2PiD02PiMuDecision",
+        #"Hlt2Dst2PiD02PiPiDecision",
+        #"Hlt2BiasedDiMuonIPDecision",
+        #"Hlt2CharmOSTF2BodyDecision",
+        #"Hlt2CharmOSTF3BodyDecision",
+        #"Hlt2IncPhiRobustDecision",
+        #"Hlt2IncPhiSidebandsDecision",
+        #"Hlt2IncPhiTrackFitDecision",
+        #"Hlt2MuTrackDecision",
+        #"Hlt2PromptJPsiDecision",
+        #"Hlt2TopoOSTF2BodyDecision",
+        #"Hlt2TopoOSTF3BodyDecision",
+        #"Hlt2TopoOSTF4BodyDecision",
+        #"Hlt2diphotonDiMuonDecision",
+        #"Hlt2UnbiasedDiMuonLowMassDecision",
+        "Hlt2CharmHadD02HH2BodyIncDecision",
+        "Hlt2CharmHadD02HH_D02PiPiDecision",
+        #"Hlt2CharmHadD02HH_D02PiPiWideMassDecision",
+        "Hlt2CharmHadD02HH_D02KPiDecision",
+        #"Hlt2CharmHadD02HH_D02KPiWideMassDecision",
+        "Hlt2CharmHadD02HH_D02KKDecision",
+        #"Hlt2CharmHadD02HH_D02KKWideMassDecision",
+        ]
+    else:
+      dttuple.TupleToolTISTOS.TriggerList = [
+        "L0MuonDecision",
+        "L0ElectronDecision",
+        "L0HadronDecision",
+        "Hlt1TrackMuonDecision",
+        "Hlt1TrackAllL0Decision",
+        "Hlt2CharmHadD02HH2BodyIncDecision",
+        "Hlt2CharmHadD02HH_D02PiPiDecision",
+        "Hlt2CharmHadD02HH_D02PiPiLsDecision",
+        "Hlt2CharmHadD02HH_D02KPiDecision",
+        "Hlt2CharmHadD02HH_D02KPiLsDecision",
+        "Hlt2CharmHadD02HH_D02KKDecision",
+        "Hlt2CharmHadD02HH_D02KKLsDecision",
+        ]
+
+    D_variables = {"DIRA": "BPVDIRA",
+                  "IPChi2": "BPVVDCHI2",
+                  # Min IP wrt all primary verticies
+                  "MinIP_PRIMARY": "MIPDV(PRIMARY)",
+                  "MinIPChi2_PRIMARY": "MIPCHI2DV(PRIMARY)",
+                  "VChi2_per_NDOF": "VFASPF(VCHI2/VDOF)",
+                  "DOCA": "DOCA(1, 2)",
+                  #"AMAXDOCA": "AMAXDOCA('')",
+                }
+    # XXX How to calculate the DOCA of the two leptons?
+    lepton_variables = {"TOMPT": "PT",
+                        "TOMP": "P",
+                        "TRCHI2DOF": "TRCHI2DOF",
+                        "TRGHOSTPROB": "TRGHOSTPROB",
+                        # XXX should this be BPVIPCHI2()?
+                        "IPChi2": "BPVVDCHI2",
+                        # Min IP wrt all primary verticies
+                        "MinIP_PRIMARY": "MIPDV(PRIMARY)",
+                        "MinIPChi2_PRIMARY": "MIPCHI2DV(PRIMARY)",
+                        "VChi2_per_NDOF": "VFASPF(VCHI2/VDOF)",
+    }
+    dttuple.addTool(TupleToolDecay, name = "x2")
+    LoKi_x2=LoKi__Hybrid__TupleTool("LoKi_x2")
+    LoKi_x2.Variables = lepton_variables
+    dttuple.x2.addTool(LoKi_x2)
+    dttuple.x2.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_x2"]
+
+    dttuple.addTool(TupleToolDecay, name = "x1")
+    LoKi_x1=LoKi__Hybrid__TupleTool("LoKi_x1")
+    LoKi_x1.Variables = lepton_variables
+    dttuple.x1.addTool(LoKi_x1)
+    dttuple.x1.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_x1"]
+
+    dttuple.addTool(TupleToolDecay, name="pi")
+    LoKi_pi = LoKi__Hybrid__TupleTool("LoKi_pi")
+    LoKi_pi.Variables = lepton_variables
+    dttuple.pi.addTool(LoKi_pi)
+    dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi"]
+
+    dttuple.addTool(TupleToolDecay, name="D0")
+    LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
+    LoKi_D0.Variables = D_variables
+    dttuple.D0.addTool(LoKi_D0)
+    dttuple.D0.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_D0"]
+
+    dttuple.addTool(TupleToolDecay, name="Dst")
+    LoKi_Dst=LoKi__Hybrid__TupleTool("LoKi_Dst")
+    LoKi_Dst.Variables = D_variables
+    dttuple.Dst.addTool(LoKi_Dst)
+    dttuple.Dst.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_Dst"]
+    
+    dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFit"))
+    dttuple.Dst.PVFit.Verbose = True
+    dttuple.Dst.PVFit.constrainToOriginVertex = True
+    dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFit"]
 
 
-  dttuple.TupleName = "Demu_NTuple"
+    if "MC" in dataType:
+      dttuple.addTool(TupleToolMCBackgroundInfo, name="TupleToolMCBackgroundInfo")
+      dttuple.TupleToolMCBackgroundInfo.Verbose=True
+      dttuple.addTool(TupleToolMCTruth, name="truth")
+      dttuple.truth.ToolList += ["MCTupleToolHierarchy",
+                                "MCTupleToolKinematic"]
+      dttuple.ToolList+=["TupleToolMCBackgroundInfo/TupleToolMCBackgroundInfo"]
+      dttuple.ToolList+=["TupleToolMCTruth/truth"]
+      
+    DaVinci().appendToMainSequence( [ dttuple ] )
   
-  dttuple.addTool(TupleToolPropertime())
-  dttuple.addTool(TupleToolTISTOS())
-  dttuple.TupleToolTISTOS.VerboseL0 = True
-  dttuple.TupleToolTISTOS.VerboseHlt1 = True
-  dttuple.TupleToolTISTOS.VerboseHlt2 = True
-  dttuple.TupleToolTISTOS.Verbose = True
-  dttuple.TupleToolTISTOS.TriggerList = [
-    #"L0Global",
-    "L0DiMuonDecision",
-    "L0ElectronDecision",
-    "L0HadronDecision",
-    "L0MuonDecision",
-    "L0MuonHighDecision",
-    "L0PhotonDecision",
-    #"Hlt1Global",
-    "Hlt1SingleMuonNoIPL0Decision",
-    "Hlt1TrackAllL0Decision",
-    "Hlt1TrackMuonDecision",
-    "Hlt1SingleMuonNoIPL0HighPTDecision",
-    #"Hlt2Global",
-    "Hlt2Dst2PiD02EMuDecision",
-    "Hlt2Dst2PiD02KMuDecision",
-    "Hlt2Dst2PiD02KPiDecision",
-    "Hlt2Dst2PiD02MuMuDecision",
-    "Hlt2Dst2PiD02PiMuDecision",
-    "Hlt2Dst2PiD02PiPiDecision",
-    "Hlt2BiasedDiMuonIPDecision",
-    "Hlt2CharmOSTF2BodyDecision",
-    "Hlt2CharmOSTF3BodyDecision",
-    "Hlt2IncPhiRobustDecision",
-    "Hlt2IncPhiSidebandsDecision",
-    "Hlt2IncPhiTrackFitDecision",
-    "Hlt2MuTrackDecision",
-    "Hlt2PromptJPsiDecision",
-    "Hlt2TopoOSTF2BodyDecision",
-    "Hlt2TopoOSTF3BodyDecision",
-    "Hlt2TopoOSTF4BodyDecision",
-    "Hlt2diphotonDiMuonDecision",
-    "Hlt2UnbiasedDiMuonLowMassDecision",
-    "Hlt2CharmHadD02HH_D02PiPiDecision",
-    "Hlt2CharmHadD02HH_D02PiPiWideMassDecision",
-    "Hlt2CharmHadD02HH_D02KPiDecision",
-    "Hlt2CharmHadD02HH_D02KPiWideMassDecision",
-    "Hlt2CharmHadD02HH_D02KKDecision",
-    "Hlt2CharmHadD02HH_D02KKWideMassDecision",
-    ]
+  elif outputType == "dst":
+    
+    from Configurables import SelDSTWriter
+    if blinded:
+      dst_Sel = AutomaticData(Location = blind_Seq.outputLocations() )
+    elif stripRun:
+      dst_Sel = AutomaticData(Location = stripOutputLoc)
+    else:
+      dst_Sel = AutomaticData(Location = "/Event/CharmCompleteEvent/" + stripOutputLoc)
+      
+    dst_Filter = FilterDesktop('dst_Filter', Code = "ALL")
 
-  D_variables = {"DIRA": "BPVDIRA",
-                "IPChi2": "BPVVDCHI2",
-                # Min IP wrt all primary verticies
-                "MinIP_PRIMARY": "MIPDV(PRIMARY)",
-                "MinIPChi2_PRIMARY": "MIPCHI2DV(PRIMARY)",
-                "VChi2_per_NDOF": "VFASPF(VCHI2/VDOF)",
-                "DOCA": "DOCA(1, 2)",
-                #"AMAXDOCA": "AMAXDOCA('')",
-              }
-  # XXX How to calculate the DOCA of the two leptons?
-  lepton_variables = {"TOMPT": "PT",
-                      "TOMP": "P",
-                      "TRCHI2DOF": "TRCHI2DOF",
-                      "TRGHOSTPROB": "TRGHOSTPROB",
-                      # XXX should this be BPVIPCHI2()?
-                      "IPChi2": "BPVVDCHI2",
-                      # Min IP wrt all primary verticies
-                      "MinIP_PRIMARY": "MIPDV(PRIMARY)",
-                      "MinIPChi2_PRIMARY": "MIPCHI2DV(PRIMARY)",
-                      "VChi2_per_NDOF": "VFASPF(VCHI2/VDOF)",
-  }
-  dttuple.addTool(TupleToolDecay, name = "x2")
-  LoKi_x2=LoKi__Hybrid__TupleTool("LoKi_x2")
-  LoKi_x2.Variables = lepton_variables
-  dttuple.x2.addTool(LoKi_x2)
-  dttuple.x2.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_x2"]
+    dst_FilterSel = Selection(name = line.name().replace("Stripping",""),
+                              Algorithm = dst_Filter,
+                              RequiredSelections = [ dst_Sel ])
 
-  dttuple.addTool(TupleToolDecay, name = "x1")
-  LoKi_x1=LoKi__Hybrid__TupleTool("LoKi_x1")
-  LoKi_x1.Variables = lepton_variables
-  dttuple.x1.addTool(LoKi_x1)
-  dttuple.x1.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_x1"]
+    dst_Seq = SelectionSequence('lsdata',
+                                TopSelection = dst_FilterSel,
+                                )
+    
+    dstw = SelDSTWriter("DSTWriter")
+    dstw.OutputFileSuffix = "Demu"
+    #dstw.CopyProtoParticles = False
+    dstw.SelectionSequences = [dst_Seq]
+    #dstw.CopyL0DUReport = False
+    #dstw.CopyHltDecReports = False
+    #dstw.CopyMCTruth = True
+    #dstw.CopyBTags = True
+    DaVinci().appendToMainSequence( [ dstw.sequence() ] )
 
-  dttuple.addTool(TupleToolDecay, name="pi")
-  LoKi_pi = LoKi__Hybrid__TupleTool("LoKi_pi")
-  LoKi_pi.Variables = lepton_variables
-  dttuple.pi.addTool(LoKi_pi)
-  dttuple.pi.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_pi"]
-
-  dttuple.addTool(TupleToolDecay, name="D0")
-  LoKi_D0=LoKi__Hybrid__TupleTool("LoKi_D0")
-  LoKi_D0.Variables = D_variables
-  dttuple.D0.addTool(LoKi_D0)
-  dttuple.D0.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_D0"]
-
-  dttuple.addTool(TupleToolDecay, name="Dst")
-  LoKi_Dst=LoKi__Hybrid__TupleTool("LoKi_Dst")
-  LoKi_Dst.Variables = D_variables
-  dttuple.Dst.addTool(LoKi_Dst)
-  dttuple.Dst.ToolList += ["LoKi::Hybrid::TupleTool/LoKi_Dst"]
-  
-  dttuple.Dst.addTool(TupleToolDecayTreeFitter("PVFit"))
-  dttuple.Dst.PVFit.Verbose = True
-  dttuple.Dst.PVFit.constrainToOriginVertex = True
-  dttuple.Dst.ToolList += ["TupleToolDecayTreeFitter/PVFit"]
-
-
-  if "MC" in dataType:
-    dttuple.addTool(TupleToolMCBackgroundInfo, name="TupleToolMCBackgroundInfo")
-    dttuple.TupleToolMCBackgroundInfo.Verbose=True
-    dttuple.addTool(TupleToolMCTruth, name="truth")
-    dttuple.truth.ToolList += ["MCTupleToolHierarchy",
-                               "MCTupleToolKinematic"]
-    dttuple.ToolList+=["TupleToolMCBackgroundInfo/TupleToolMCBackgroundInfo"]
-    dttuple.ToolList+=["TupleToolMCTruth/truth"]
-
-  #from Configurables import DaVinci, PrintDecayTree, GaudiSequencer
-  #from Configurables import LoKi__HDRFilter
-  #TupleSeq = GaudiSequencer('TupleSeq')
-  ##pt = PrintDecayTree(Inputs = [ location ])
-  #sf = LoKi__HDRFilter( 'StripPassFilter', Code="HLT_PASS('StrippingDstarD02xxDst2PiD02emuBoxDecision')", Location="/Event/Strip/Phys/DecReports" )
-  #TupleSeq.Members = [ sf, dttuple ]
-  #DaVinci().appendToMainSequence( [ TupleSeq ] )
-
-
-
-  DaVinci().appendToMainSequence( [ dttuple ] )
