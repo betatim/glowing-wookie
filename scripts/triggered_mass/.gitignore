@@ -1,0 +1,7 @@
+*.pyc
+*~
+*.bak
+*.png
+*.pdf
+*.backup
+*.kate-swp
