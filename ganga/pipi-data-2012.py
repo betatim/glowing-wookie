@@ -19,7 +19,7 @@ execute(
   stripRun = False,
   stripConf = "default",
   stripLine = "pipi",
-  dataType = "data",
+  dataType = "data2012",
   blinded = False,
   hltReport = False,
   tupleDecay = "pipi",

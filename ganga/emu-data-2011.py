@@ -20,7 +20,7 @@ execute(
   stripRun = False,
   stripConf = "default",
   stripLine = "emu",
-  dataType = "data",
+  dataType = "dat2011",
   blinded = True,
   hltReport = False,
   tupleDecay = "emu",
