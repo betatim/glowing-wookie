@@ -117,23 +117,38 @@ class Trigger(Selection):
             return False
 
 class PIDSelection(Selection):
-    def __init__(self, pid_mu, pid_e):
+    def __init__(self, x1_e=0.45, pi_ghost=0.05, x2_ghost=0.05, x2_mu=0.3, x2_k=0.55, pi_pi=0.45, x1_k=0.8):
         """Selects events for which PIDe and PIDmu are above
         `pid_mu` and `pid_e`.
         """
         # Stick to DLL variables for the moment
         # not sure Tim understands the shape of ProbNNmu
+        #Selection.__init__(self,
+        #                   ["x2_isMuon", "x2_PIDmu", "x1_PIDe"])
+        #x1_ProbNNe>0.45&&pi_ProbNNghost<0.05&&x2_ProbNNghost<0.05&&x2_ProbNNmu>0.3&&x2_ProbNNk<0.55&&pi_ProbNNpi>0.45&&x1_ProbNNk<0.8
         Selection.__init__(self,
-                           ["x2_isMuon", "x2_PIDmu", "x1_PIDe"])
-        self.pid_e = pid_e
-        self.pid_mu = pid_mu
+                           ["x1_ProbNNe", "pi_ProbNNghost", "x2_ProbNNghost", "x2_ProbNNmu", "x2_ProbNNk", "pi_ProbNNpi", "x1_ProbNNk"])
+        self.x1_e = x1_e
+        self.pi_ghost = pi_ghost
+        self.x2_ghost = x2_ghost
+        self.x2_mu = x2_mu
+        self.x2_k = x2_k
+        self.pi_pi = pi_pi
+        self.x1_k = x1_k
 
     def __call__(self, evt):
         self._Ntotal += 1
 
-        if (evt.x2_isMuon and
-            evt.x1_PIDe > self.pid_e and
-            evt.x2_PIDmu > self.pid_mu):
+        #print evt.x1_isMuon, evt.x1_ProbNNe> self.x1_e,evt.pi_ProbNNghost < self.pi_ghost,evt.x2_ProbNNghost < self.x2_ghost,evt.x2_ProbNNmu > self.x2_mu,evt.x2_ProbNNk < self.x2_k,evt.pi_ProbNNpi > self.pi_pi,evt.x1_ProbNNk < self.x1_k
+
+        if (#evt.x2_isMuon and
+            evt.x1_ProbNNe > self.x1_e and
+            evt.pi_ProbNNghost < self.pi_ghost and
+            evt.x2_ProbNNghost < self.x2_ghost and
+            evt.x2_ProbNNmu > self.x2_mu and
+            evt.x2_ProbNNk < self.x2_k and
+            evt.pi_ProbNNpi > self.pi_pi and
+            evt.x1_ProbNNk < self.x1_k):
             self._Npassed += 1
             return True
 
@@ -210,7 +225,8 @@ if __name__ == "__main__":
     tree_sig.SetBranchStatus("*", False)
     tree_bg.SetBranchStatus("*", False)
     
-    fname = config.workingpath + "/d2emu-tmva.root"
+    #fname = config.workingpath + "/d2emu-tmva.root"
+    fname = "./d2emu-tmva.root"
     out_file = R.TFile(fname, "RECREATE")
     
     factory = TMVA.Factory("d2emu", out_file, "!Color")
@@ -230,9 +246,16 @@ if __name__ == "__main__":
              ]
     spectators = [V("D0_M"),
                   V("Dst_M"),
-                  V("pi_ProbNNmu"),
+                  V("pi_ProbNNe"),
                   V("pi_ProbNNpi"),
+                  V("pi_ProbNNp"),
+                  V("pi_ProbNNk"),
+                  V("pi_ProbNNmu"),
+                  V("pi_ProbNNghost"),
                   V("x1_BremMultiplicity"),
+                  V("x1_ProbNNk"),
+                  V("x1_ProbNNpi"),
+                  V("x1_ProbNNp"),
                   V("x1_ProbNNe"),
                   V("x1_ProbNNmu"),
                   V("x1_ProbNNghost"),
@@ -242,6 +265,9 @@ if __name__ == "__main__":
                   V("x1_isMuon"),
                   V("x1_cp_0.50"),
                   V("x1_cmult_0.50"),
+                  V("x2_ProbNNk"),
+                  V("x2_ProbNNp"),
+                  V("x2_ProbNNpi"),
                   V("x2_ProbNNe"),
                   V("x2_ProbNNmu"),
                   V("x2_ProbNNghost"),
@@ -251,7 +277,6 @@ if __name__ == "__main__":
                   V("x2_cp_0.50"),
                   V("x2_cmult_0.50"),
                   DeltaV("Dst_M", "D0_M"),
-                  V("Dst_Hlt2CharmHadD02HH_D02KPiWideMassDecision_TOS"),
                   V("Dst_L0MuonDecision_TOS"),
                   V("Dst_L0ElectronDecision_TOS"),
               ]
@@ -261,15 +286,19 @@ if __name__ == "__main__":
                   variables,
                   spectators)
 
-    pid_selection = PIDSelection(pid_mu=-1., pid_e=1.)
-    hlt2_selection = Trigger(["Dst_Hlt2CharmHadD02HH_D02KPiWideMassDecision_TOS",
-                              "Dst_Hlt2Dst2PiD02PiPiDecision_TOS",
-                              "Dst_Hlt2Dst2PiD02KPiDecision_TOS"
+    pid_selection = PIDSelection()
+    hlt2_selection = Trigger(["Dst_Hlt2CharmHadD02HH_D02PiPiDecision_TOS",
+                              "Dst_Hlt2CharmHadD02HH_D02KPiDecision_TOS",
+                              "Dst_Hlt2CharmHadD02HH_D02KKDecision_TOS",
+                              #"Dst_Hlt2Dst2PiD02KKDecision_TOS",
+                              #"Dst_Hlt2Dst2PiD02PiPiDecision_TOS",
+                              #"Dst_Hlt2Dst2PiD02KPiDecision_TOS"
                               ])
     hlt1_selection = Trigger(["Dst_Hlt1TrackMuonDecision_TOS",
-                              "Dst_Hlt1TrackAllL0Decision_TOS"])
+                              #"Dst_Hlt1TrackAllL0Decision_TOS",
+                              ])
     l0_selection = Trigger(["Dst_L0MuonDecision_TOS",
-                            "Dst_L0ElectronDecision_TOS",
+                            #"Dst_L0ElectronDecision_TOS",
                             ])
     selectors = [pid_selection, l0_selection,
                  hlt1_selection, hlt2_selection]
@@ -338,29 +367,46 @@ if __name__ == "__main__":
                                                                             trees,
                                                                             max_depth,
                                                                             weighted))"""
+    #n_trees = (1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640)
+    #max_depths = (1,2,3,4,5,6,7,8,9,10)
     n_trees = (1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640)
     max_depths = (1,2,3,4,5,6,7,8,9,10)
-    
-    n_trees = (80,120,140)
-    max_depths = (5,7,9,11)
+#BDT_grad_30_120_7_1_10:    
+    n_trees = (120,)
+    max_depths = (7,)
     for trees,max_depth,weighted,shrink,nnodes in itertools.product(n_trees,
                                                                     max_depths,
-                                                                    (1, 0),
+                                                                    (1,),
                                                                     #(0.01,0.02,0.05,0.1,0.2,0.3,0.7,1.),
-                                                                    (0.02,0.05,0.1),
+                                                                    (0.05,),
                                                                     #(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)
-                                                                    (11,20,30,)
+                                                                    (30,)
                                                                     ):
             factory.BookMethod(TMVA.Types.kBDT,
+			       #"BDT_ada",
                                "BDT_grad_%i_%i_%i_%i_%i"%(nnodes, trees, max_depth, weighted, shrink*100),
                                "NNodesMax=%i:"
                                "DoBoostMonitor=1:Shrinkage=%f:"
-                               "NTrees=%i:BoostType=Grad:nCuts=-1:MaxDepth=%i:"
+                               "NTrees=%i:BoostType=Grad:nCuts=100:MaxDepth=%i:" # nCuts=-1 is better but errors so its 20
                                "PruneMethod=NoPruning:UseWeightedTrees=%i"%(nnodes,
                                                                             shrink,
                                                                             trees,
                                                                             max_depth,
                                                                             weighted))
+                                                                            
+    #method = factory.BookMethod(TMVA.Types.kBDT, "BDT",
+                   #":".join([
+                       #"!H",
+                       #"!V",
+                       #"NTrees=850",
+                       #"nEventsMin=150",
+                       #"MaxDepth=3",
+                       #"BoostType=AdaBoost",
+                       #"AdaBoostBeta=0.5",
+                       #"SeparationType=GiniIndex",
+                       #"nCuts=20",
+                       #"PruneMethod=NoPruning",
+                       #]))
                                                                             
     
     print "Training"

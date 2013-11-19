@@ -31,16 +31,22 @@ config = {
   'outFileName': "fitResult."+systName+".root",
   'loadFileName': "fitResult.blank.root",
 
+  'kpiFile': "/afs/cern.ch/work/t/tbird/demu/ntuples/kpi/strip_kpi_fitter.root",
   'pipiFile': "/afs/cern.ch/work/t/tbird/demu/ntuples/pipi/strip_pipi_fitter.root",
   'mvaFile': "/afs/cern.ch/work/t/tbird/demu/ntuples/emu/mva_emu_fitter.root",
 
   'mode': "datapretoy",
   
   'pipiBR': [1.401e-3,0.026e-3],
-  #          strip e|tr e
-  'emuEff': (3.1e-2 * .28),
-  #           strip e|st pre|hlt2 p|  tr e  |  off e
-  'pipiEff': (1.8e-2 * 0.5 * 0.03 * 15.44e-2 * 63.17e-2),
+  'kpiBR': [3.88e-2,0.05e-2],
+  #          strip e | tr e             | off e  | gen e
+  'emuEff': (3.1e-2 * 0.576*0.526*0.632* 0.5308 * 0.141),
+  #           strip e|  tr e            |  off e
+  'pipiEff': (1.8e-2 * 0.398*0.558*0.887 * 0.5733),
+  #           strip e |  tr e            
+  'kpiEff':  (0.46e-2 * 0.385*0.566*0.883),
+  
+  'norm':'kpi',
   
   'doFit': True,
   'loadFit': False,
@@ -134,7 +140,7 @@ w = pdf.setup_workspace(config)
 D0_M = w.obj("D0_M")
 Del_M = w.obj("Del_M")
 Final_PDF = w.obj("Final_PDF")
-
+#Final_PDF.Print("v")
 
 componantColours = [
     ["BDT1_Sig,BDT2_Sig,BDT3_Sig,PiPi_Sig", 16, ROOT.kSolid,16,1001],
@@ -176,12 +182,11 @@ if config['mode'] is "toy":
 
 mvaFile = TFile(config['mvaFile'],"OPEN")
 mvaTree = mvaFile.Get("subTree")
-
-bdt1UnbDataSet = RooDataSet("bdt1UnbDataSet", "bdt1UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada<0 && Del_M>139.4")
+bdt1UnbDataSet = RooDataSet("bdt1UnbDataSet", "bdt1UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada<0.455 && Del_M>139.4")
 bdt1UnbDataSet.Print()
-bdt2UnbDataSet = RooDataSet("bdt2UnbDataSet", "bdt2UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.0 && BDT_ada<0.08 && Del_M>139.4")
+bdt2UnbDataSet = RooDataSet("bdt2UnbDataSet", "bdt2UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.455 && BDT_ada<0.613 && Del_M>139.4")
 bdt2UnbDataSet.Print()
-bdt3UnbDataSet = RooDataSet("bdt3UnbDataSet", "bdt3UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.08 && Del_M>139.4")
+bdt3UnbDataSet = RooDataSet("bdt3UnbDataSet", "bdt3UnbDataSet", mvaTree, w.set("argsPreCut"), "BDT_ada>0.613 && Del_M>139.4")
 bdt3UnbDataSet.Print()
 
 bdt1UnbPruneDataSet = RooDataSet("bdt1UnbPruneDataSet", "bdt1UnbPruneDataSet", bdt1UnbDataSet, w.set("argsBasic"), "")
@@ -192,14 +197,24 @@ bdt3UnbPruneDataSet = RooDataSet("bdt3UnbPruneDataSet", "bdt3UnbPruneDataSet", b
 bdt3UnbPruneDataSet.Print()
 
 if config['mode'] is "data" or config['mode'] is "toy":
-  pipiFile = TFile(config['pipiFile'],"OPEN")
-  pipiTree = pipiFile.Get("subTree")
-  
-  pipiUnbDataSet = RooDataSet("pipiUnbDataSet", "pipiUnbDataSet", pipiTree, w.set("argsPreCutPiPi"), "Del_M>139.4")
-  pipiUnbDataSet.Print()
+  if config['norm'] is 'pipi':
+    pipiFile = TFile(config['pipiFile'],"OPEN")
+    pipiTree = pipiFile.Get("subTree")
+    
+    pipiUnbDataSet = RooDataSet("pipiUnbDataSet", "pipiUnbDataSet", pipiTree, w.set("argsPreCutPiPi"), "Del_M>139.4")
+    pipiUnbDataSet.Print()
 
-  pipiUnbPruneDataSet = RooDataSet("pipiUnbPruneDataSet", "pipiUnbPruneDataSet", pipiUnbDataSet, w.set("argsBasic"), "D0_M>1800 && D0_M<1930")
-  pipiUnbPruneDataSet.Print()
+    pipiUnbPruneDataSet = RooDataSet("pipiUnbPruneDataSet", "pipiUnbPruneDataSet", pipiUnbDataSet, w.set("argsBasic"), "D0_M>1826 && D0_M<1920")
+    pipiUnbPruneDataSet.Print()
+  elif config['norm'] is 'kpi':
+    pipiFile = TFile(config['kpiFile'],"OPEN")
+    pipiTree = pipiFile.Get("subTree")
+    
+    pipiUnbDataSet = RooDataSet("pipiUnbDataSet", "pipiUnbDataSet", pipiTree, w.set("argsPreCutKPi"), "Del_M>139.4")
+    pipiUnbDataSet.Print()
+
+    pipiUnbPruneDataSet = RooDataSet("pipiUnbPruneDataSet", "pipiUnbPruneDataSet", pipiUnbDataSet, w.set("argsBasic"), "D0_M>1800 && D0_M<1920")
+    pipiUnbPruneDataSet.Print()
   
   
 if config['mode'] is "toy":
@@ -299,16 +314,16 @@ timers["startup"].Print()
 
 timers["fitting"].Start()
 
-print "To MINUIT! Fitting to %s::%s at %s, saving result in %s" % (Final_PDF.ClassName(), Final_PDF.GetName(), datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y"), config['outFileName'])
+print "To MINUIT! Fitting to %s::%s in mode %s at %s, saving result in %s" % (Final_PDF.ClassName(), Final_PDF.GetName(), config['mode'],datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y"), config['outFileName'])
 
 r=False
 if config['doFit']:
   if config['doBinned']:
     #r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
-    r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Optimize(1))
+    r=Final_PDF.fitTo(fullDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Optimize(0))
   else:
     #r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Minimizer("Minuit2", "Migrad"))
-    r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Optimize(1))
+    r=Final_PDF.fitTo(fullUnbDataSet,RooFit.Save(),RooFit.NumCPU(nCPUs,True),RooFit.Timer(True),RooFit.PrintEvalErrors(1),RooFit.Optimize(0))
   r.SetName("RooFitResults")
   getattr(w, 'import')(r)
 elif config['loadFit']:
@@ -316,7 +331,7 @@ elif config['loadFit']:
   r = fitResultsFile.Get("RooFitResults")
   fitResultsFile.Close()
 
-#RooMsgService.instance().setGlobalKillBelow(RooFit.FATAL)
+RooMsgService.instance().setGlobalKillBelow(RooFit.FATAL)
 
 
 if r:
@@ -417,15 +432,12 @@ def ueberPlot(w,plotName,plotVar,cpus,mixState,massCat,cut,dataArr,varMax=-1,asy
   #elif mixState == "Neg":
     #oscSlice = RooFit.Slice(w.obj("Mu_CHARGE_CAT"),"negitive")
     
-  #if config['mode'] is "mc":
-    #pdfName = "Sig"
-  #elif config['mode'] is "datapretoy":
-    #pdfName = "Comb_Blind"
-  #elif config['mode'] is "toy":
-    #pdfName = "Final_PDF"
-  #elif config['mode'] is "data":
-    #pdfName = "Final_PDF"
-  pdfName = "Final_PDF"
+  if config["mode"] is "mc":
+    pdfName = "Sig"
+  elif config["mode"] is "datapretoy":
+    pdfName = "Comb_Blind"
+  else:
+    pdfName = "Final_PDF"
     
   cpus = 1
 

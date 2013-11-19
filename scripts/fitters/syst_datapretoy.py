@@ -3,5 +3,7 @@
 #doGof = True
 
 config = {  
-    #'doFit':False
+  "mode":"datapretoy",
+    #'doFit':False,
+  'doLimits': False,
   }

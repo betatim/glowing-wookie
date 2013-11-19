@@ -21,9 +21,13 @@ ds = sys.argv[1]
 tf = TFile("/afs/cern.ch/work/t/tbird/demu/ntuples/mc%s/strip_%s.root"%(ds,ds))
 ttree = tf.Get("Demu_NTuple/Demu_NTuple")
 
-pipiPidCut = "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && x1_ProbNNpi*x2_ProbNNpi > 0.7 && pi_ProbNNpi > 0.6 && x1_ProbNNk < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7"
+cuts = {
+  "pipi"  : "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && x1_ProbNNpi*x2_ProbNNpi > 0.7 && pi_ProbNNpi > 0.6 && x1_ProbNNk < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7",
+  "emu"   : "x1_ProbNNe>0.45 && pi_ProbNNghost<0.05 && x2_ProbNNghost<0.05 && x2_ProbNNmu>0.3 && x2_ProbNNk<0.55 && pi_ProbNNpi>0.45 && x1_ProbNNk<0.8",
+  "kpi"  : "x1_ProbNNk > 0.6 && x2_ProbNNpi > 0.6 && x1_ProbNNk*x2_ProbNNpi > 0.7 && pi_ProbNNpi > 0.6 && x1_ProbNNpi < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7",
+  }
 
-offline_cuts = pipiPidCut
+offline_cuts = cuts[ds]
 
 lines_per_level = 2
 

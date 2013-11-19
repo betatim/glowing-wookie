@@ -1,51 +1,48 @@
+// all users - please change the name of this file to lhcbStyle.C
+// Commits to lhcbdocs svn of .C files are not allowed
 {
+
+  // define names for colours
+  Int_t black  = 1;
+  Int_t red    = 2;
+  Int_t green  = 3;
+  Int_t blue   = 4;
+  Int_t yellow = 5; 
+  Int_t magenta= 6;
+  Int_t cyan   = 7;
+  Int_t purple = 9;
+  
+
 ////////////////////////////////////////////////////////////////////
 // PURPOSE:
 //
-// This macro defines a reasonable style for (black-and-white) 
-// "publication quality" ROOT plots. The default settings contain 
-// many features that are either not desirable for printing on white 
-// paper or impair the general readibility of plots.
+// This macro defines a standard style for (black-and-white) 
+// "publication quality" LHCb ROOT plots. 
 //
 // USAGE:
 //
-// Simply include the line
-//   gROOT->ProcessLine(".x $LHCBSTYLE/root/lhcbstyle.C");
+// Include the lines
+//   gROOT->ProcessLine(".L lhcbstyle.C");
+//   lhcbStyle();
 // at the beginning of your root macro.
 //
-// SOME COMMENTS:
+// Example usage is given in myPlot.C
 //
-// Statistics and fit boxes:
-//
-// "Decorative" items around the histogram are kept to a minimum.
-// In particular there is no box with statistics or fit information.
-// You can easily change this either by editing your private copy
-// of this style file or by calls to "gStyle" in your macro.
-// For example, 
-//   gStyle->SetOptFit(1011);
-// will add some fit information.
+// COMMENTS:
 //
 // Font:
 // 
-// The font is chosen to be 62, i.e.helvetica-bold-r-normal with
-// precision 2. Font is of course a matter of taste, but most people
-// will probably agree that Helvetica bold gives close to optimal
-// readibility in presentations. It appears to be the ROOT default, 
-// and since there are still some features in ROOT that simply won't 
-// respond to any font requests, it is the wise choice to avoid 
-// ugly font mixtures on the same plot... The precision of the font (2)
-// is chosen in order to have a rotatable and scalable font. Be sure
-// to use true-type fonts! I.e.
-// Unix.*.Root.UseTTFonts: true  in your .rootrc file. 
+// The font is chosen to be 132, this is Times New Roman (like the text of
+//  your document) with precision 2.
 //
 // "Landscape histograms":
 //
-// The style here is designed for more or less quadratic plots.
-// For very long histograms, adjustements are needed. For instance, 
-// for a canvas with 1x5 histograms:
+// The style here is designed for more or less square plots.
+// For longer histograms, or canvas with many pads, adjustements are needed. 
+// For instance, for a canvas with 1x5 histograms:
 //  TCanvas* c1 = new TCanvas("c1", "L0 muons", 600, 800);
 //  c1->Divide(1,5);
-// adaptions like the following will be needed:
+//  Adaptions like the following will be needed:
 //  gStyle->SetTickLength(0.05,"x");
 //  gStyle->SetTickLength(0.01,"y");
 //  gStyle->SetLabelSize(0.15,"x");
@@ -53,203 +50,158 @@
 //  gStyle->SetStatW(0.15);
 //  gStyle->SetStatH(0.5);
 //
-////////////////////////////////////////////////////////////////////
+// Authors: Thomas Schietinger, Andrew Powell, Chris Parkes, Niels Tuning
+// Maintained by Editorial board member (currently Niels)
+///////////////////////////////////////////////////////////////////
 
-/*cout << "executing lhcbStyle.C:" << endl;
-cout << "                      " << endl;
-cout << "                      " << endl;
-cout << "                         $      $   $   $$$   $    " << endl;
-cout << "                         $      $   $  $      $    " << endl;
-cout << "                         $      $$$$$  $      $$$  " << endl;
-cout << "                         $      $   $  $      $  $ " << endl;
-cout << "                         $$$$$  $   $   $$$   $$$  " << endl;
-cout << " " << endl;
-cout << "                           LHCb ROOT style file " << endl;
-cout << " " << endl;
-cout << 
-"     Problems, suggestions, contributions to Thomas.Schietinger@cern.ch" << endl;
-cout << " " << endl;*/
+  // Use times new roman, precision 2 
+  Int_t lhcbFont        = 132;  // Old LHCb style: 62;
+  // Line thickness
+  Double_t lhcbWidth    = 2.00; // Old LHCb style: 3.00;
+  // Text size
+  Double_t lhcbTSize    = 0.06; 
+  
+  // use plain black on white colors
+  gROOT->SetStyle("Plain"); 
+  TStyle *lhcbStyle= new TStyle("lhcbStyle","LHCb plots style");
+  
+  //lhcbStyle->SetErrorX(0); //  don't suppress the error bar along X
 
-//gROOT->Reset();
+  lhcbStyle->SetFillColor(0);
+  lhcbStyle->SetFillStyle(1001);   // solid
+  lhcbStyle->SetFrameFillColor(0);
+  lhcbStyle->SetFrameBorderMode(0);
+  lhcbStyle->SetPadBorderMode(0);
+  lhcbStyle->SetPadColor(0);
+  lhcbStyle->SetCanvasBorderMode(0);
+  lhcbStyle->SetCanvasColor(0);
+  lhcbStyle->SetStatColor(0);
+  lhcbStyle->SetLegendBorderSize(0);
+  lhcbStyle->SetLegendFillColor(0);
+  lhcbStyle->SetLegendFont(132);
 
-TStyle *lhcbStyle= new TStyle("lhcbStyle","Thomas personal plots style");
+//   // If you want the usual gradient palette (blue -> red)
+//   lhcbStyle->SetPalette(1);
+//   // If you want colors that correspond to gray scale in black and white:
+//   int colors[8] = {0,5,7,3,6,2,4,1};
+//   lhcbStyle->SetPalette(8,colors);
+  
+  const Int_t NRGBs = 5;
+  const Int_t NCont = 255;
 
-// use helvetica-bold-r-normal, precision 2 (rotatable)
-Int_t lhcbFont = 62;
-// line thickness
-Double_t lhcbWidth = 3.00;
+  Double_t gctstops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
+  Double_t gctred[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
+  Double_t gctgreen[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
+  Double_t gctblue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
+  TColor::CreateGradientColorTable(NRGBs, gctstops, gctred, gctgreen, gctblue, NCont);
+  lhcbStyle->SetNumberContours(NCont);
 
-// use plain black on white colors
-lhcbStyle->SetFrameBorderMode(0);
-lhcbStyle->SetCanvasBorderMode(0);
-lhcbStyle->SetPadBorderMode(0);
-//lhcbStyle->SetPadColor(0); // test for colour
-lhcbStyle->SetCanvasColor(0);
-lhcbStyle->SetStatColor(0);
-//lhcbStyle->SetPalette(1);
-//lhcbStyle->SetTitleColor(0);
-//lhcbStyle->SetFillColor(0); // test for colour
-lhcbStyle->SetTitleBorderSize(0);
+  // set the paper & margin sizes
+  lhcbStyle->SetPaperSize(20,26);
+  lhcbStyle->SetPadTopMargin(0.05);
+  lhcbStyle->SetPadRightMargin(0.05); // increase for colz plots
+  lhcbStyle->SetPadBottomMargin(0.16);
+  lhcbStyle->SetPadLeftMargin(0.14);
+  
+  // use large fonts
+  lhcbStyle->SetTextFont(lhcbFont);
+  lhcbStyle->SetTextSize(lhcbTSize);
+  lhcbStyle->SetLabelFont(lhcbFont,"x");
+  lhcbStyle->SetLabelFont(lhcbFont,"y");
+  lhcbStyle->SetLabelFont(lhcbFont,"z");
+  lhcbStyle->SetLabelSize(lhcbTSize,"x");
+  lhcbStyle->SetLabelSize(lhcbTSize,"y");
+  lhcbStyle->SetLabelSize(lhcbTSize,"z");
+  lhcbStyle->SetTitleFont(lhcbFont);
+  lhcbStyle->SetTitleFont(lhcbFont,"x");
+  lhcbStyle->SetTitleFont(lhcbFont,"y");
+  lhcbStyle->SetTitleFont(lhcbFont,"z");
+  lhcbStyle->SetTitleSize(1.2*lhcbTSize,"x");
+  lhcbStyle->SetTitleSize(1.2*lhcbTSize,"y");
+  lhcbStyle->SetTitleSize(1.2*lhcbTSize,"z");
 
-// set the paper & margin sizes
-//lhcbStyle->SetPaperSize(20,26);
-lhcbStyle->SetPadTopMargin(0.02);
-lhcbStyle->SetPadRightMargin(0.02); // increase for colz plots!!
-lhcbStyle->SetPadBottomMargin(0.14);
-lhcbStyle->SetPadLeftMargin(0.14);
+  // use medium bold lines and thick markers
+  lhcbStyle->SetLineWidth(lhcbWidth);
+  lhcbStyle->SetFrameLineWidth(lhcbWidth);
+  lhcbStyle->SetHistLineWidth(lhcbWidth);
+  lhcbStyle->SetFuncWidth(lhcbWidth);
+  lhcbStyle->SetGridWidth(lhcbWidth);
+  lhcbStyle->SetLineStyleString(2,"[12 12]"); // postscript dashes
+  lhcbStyle->SetMarkerStyle(20);
+  lhcbStyle->SetMarkerSize(1.0);
 
-// use large fonts
-lhcbStyle->SetTextFont(lhcbFont);
-lhcbStyle->SetTextSize(0.08);
-lhcbStyle->SetLabelFont(lhcbFont,"x");
-lhcbStyle->SetLabelFont(lhcbFont,"y");
-lhcbStyle->SetLabelFont(lhcbFont,"z");
-lhcbStyle->SetLabelSize(0.05,"x");
-lhcbStyle->SetLabelSize(0.05,"y");
-lhcbStyle->SetLabelSize(0.05,"z");
-lhcbStyle->SetTitleFont(lhcbFont);
-lhcbStyle->SetTitleSize(0.06,"x");
-lhcbStyle->SetTitleSize(0.06,"y");
-lhcbStyle->SetTitleSize(0.06,"z");
+  // label offsets
+  lhcbStyle->SetLabelOffset(0.010,"X");
+  lhcbStyle->SetLabelOffset(0.010,"Y");
 
-lhcbStyle->SetTitleYOffset(1.15);
+  // by default, do not display histogram decorations:
+  lhcbStyle->SetOptStat(0);  
+  //lhcbStyle->SetOptStat("emr");  // show only nent -e , mean - m , rms -r
+  // full opts at http://root.cern.ch/root/html/TStyle.html#TStyle:SetOptStat
+  lhcbStyle->SetStatFormat("6.3g"); // specified as c printf options
+  lhcbStyle->SetOptTitle(0);
+  lhcbStyle->SetOptFit(0);
+  //lhcbStyle->SetOptFit(1011); // order is probability, Chi2, errors, parameters
+  //titles
+  lhcbStyle->SetTitleOffset(0.95,"X");
+  lhcbStyle->SetTitleOffset(0.95,"Y");
+  lhcbStyle->SetTitleOffset(1.2,"Z");
+  lhcbStyle->SetTitleFillColor(0);
+  lhcbStyle->SetTitleStyle(0);
+  lhcbStyle->SetTitleBorderSize(0);
+  lhcbStyle->SetTitleFont(lhcbFont,"title");
+  lhcbStyle->SetTitleX(0.0);
+  lhcbStyle->SetTitleY(1.0); 
+  lhcbStyle->SetTitleW(1.0);
+  lhcbStyle->SetTitleH(0.05);
+  
+  // look of the statistics box:
+  lhcbStyle->SetStatBorderSize(0);
+  lhcbStyle->SetStatFont(lhcbFont);
+  lhcbStyle->SetStatFontSize(0.05);
+  lhcbStyle->SetStatX(0.9);
+  lhcbStyle->SetStatY(0.9);
+  lhcbStyle->SetStatW(0.25);
+  lhcbStyle->SetStatH(0.15);
 
+  // put tick marks on top and RHS of plots
+  lhcbStyle->SetPadTickX(1);
+  lhcbStyle->SetPadTickY(1);
 
-// use bold lines and markers
-lhcbStyle->SetLineWidth(lhcbWidth);
-lhcbStyle->SetFrameLineWidth(lhcbWidth);
-lhcbStyle->SetHistLineWidth(lhcbWidth);
-lhcbStyle->SetFuncWidth(lhcbWidth);
-lhcbStyle->SetGridWidth(lhcbWidth);
-lhcbStyle->SetLineStyleString(2,"[12 12]"); // postscript dashes
-//lhcbStyle->SetMarkerStyle(15);
-lhcbStyle->SetMarkerStyle(20);
-lhcbStyle->SetMarkerSize(1.5);
+  // histogram divisions: only 5 in x to avoid label overlaps
+  lhcbStyle->SetNdivisions(505,"x");
+  lhcbStyle->SetNdivisions(510,"y");
+  
+  gROOT->SetStyle("lhcbStyle");
+  gROOT->ForceStyle();
 
-// label offsets
-lhcbStyle->SetLabelOffset(0.015);
+  // add LHCb label
+  lhcbName = new TPaveText(gStyle->GetPadLeftMargin() + 0.05,
+                           0.87 - gStyle->GetPadTopMargin(),
+                           gStyle->GetPadLeftMargin() + 0.20,
+                           0.95 - gStyle->GetPadTopMargin(),
+                           "BRNDC");
+  lhcbName->AddText("LHCb");
+  lhcbName->SetFillColor(0);
+  lhcbName->SetTextAlign(12);
+  lhcbName->SetBorderSize(0);
 
-// by default, do not display histogram decorations:
-lhcbStyle->SetOptStat(0);  
-lhcbStyle->SetOptStat(1110);  // show only nent, mean, rms
-//lhcbStyle->SetOptStat(10); // entries only
-lhcbStyle->SetOptTitle(0);
-lhcbStyle->SetOptFit(111); 
-//lhcbStyle->SetOptFit(1011); // show probability, parameters and errors
+  TText *lhcbLabel = new TText();
+  lhcbLabel->SetTextFont(lhcbFont);
+  lhcbLabel->SetTextColor(1);
+  lhcbLabel->SetTextSize(lhcbTSize);
+  lhcbLabel->SetTextAlign(12);
 
-// look of the statistics box:
-lhcbStyle->SetStatBorderSize(1);
-lhcbStyle->SetStatFont(lhcbFont);
-lhcbStyle->SetStatFontSize(0.05);
-lhcbStyle->SetStatX(0.94);
-lhcbStyle->SetStatY(0.9);
-lhcbStyle->SetStatW(0.25);
-lhcbStyle->SetStatH(0.05);
+  TLatex *lhcbLatex = new TLatex();
+  lhcbLatex->SetTextFont(lhcbFont);
+  lhcbLatex->SetTextColor(1);
+  lhcbLatex->SetTextSize(lhcbTSize);
+  lhcbLatex->SetTextAlign(12);
 
-// put tick marks on top and RHS of plots
-lhcbStyle->SetPadTickX(1);
-lhcbStyle->SetPadTickY(1);
-
-
-    const Int_t NRGBs = 5;
-    const Int_t NCont = 255;
-
-    Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
-    Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
-    Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
-    Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
-    TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
-    lhcbStyle->SetNumberContours(NCont);
-
-
-// histogram divisions: only 5 in x to avoid label overlaps
-lhcbStyle->SetNdivisions(505,"x");
-lhcbStyle->SetNdivisions(510,"y");
-
-TPaveText *lhcbName = new TPaveText(0.65,0.8,0.9,0.9,"BRNDC");
-lhcbName->SetFillColor(0);
-lhcbName->SetTextAlign(12);
-lhcbName->SetBorderSize(0);
-lhcbName->AddText("LHCb");
-
-TPaveText *lhcbPrelimR = new TPaveText(0.70 - lhcbStyle->GetPadRightMargin(),
-				       0.80 - lhcbStyle->GetPadTopMargin(),
-				       0.95 - lhcbStyle->GetPadRightMargin(),
-				       0.85 - lhcbStyle->GetPadTopMargin(),
-				       "BRNDC");
-lhcbPrelimR->SetFillColor(0);
-lhcbPrelimR->SetTextAlign(12);
-lhcbPrelimR->SetBorderSize(0);
-lhcbPrelimR->AddText("#splitline{LHCb}{#scale[1.0]{Preliminary}}");
-
-TPaveText *lhcbPrelimL = new TPaveText(lhcbStyle->GetPadLeftMargin() + 0.05,
-				       0.87 - lhcbStyle->GetPadTopMargin(),
-				       lhcbStyle->GetPadLeftMargin() + 0.30,
-				       0.95 - lhcbStyle->GetPadTopMargin(),
-				       "BRNDC");
-lhcbPrelimL->SetFillColor(0);
-lhcbPrelimL->SetTextAlign(12);
-lhcbPrelimL->SetBorderSize(0);
-lhcbPrelimL->AddText("#splitline{LHCb}{#scale[1.0]{Preliminary}}");
-
-TPaveText *lhcb7TeVPrelimR = new TPaveText(0.70 - lhcbStyle->GetPadRightMargin(),
-					   0.75 - lhcbStyle->SetPadTopMargin(0.05),
-					   0.95 - lhcbStyle->GetPadRightMargin(),
-					   0.85 - lhcbStyle->SetPadTopMargin(0.05),
-					   "BRNDC");
-lhcb7TeVPrelimR->SetFillColor(0);
-lhcb7TeVPrelimR->SetTextAlign(12);
-lhcb7TeVPrelimR->SetBorderSize(0);
-lhcb7TeVPrelimR->AddText("#splitline{#splitline{LHCb}{Preliminary}}{#scale[0.7]{#sqrt{s} = 7 TeV Data}}");
-
-TPaveText *lhcb7TeVPrelimL = new TPaveText(lhcbStyle->GetPadLeftMargin() + 0.05,
-					   0.78 - lhcbStyle->SetPadTopMargin(0.05),
-					   lhcbStyle->GetPadLeftMargin() + 0.30,
-					   0.88 - lhcbStyle->SetPadTopMargin(0.05),
-					   "BRNDC");
-lhcb7TeVPrelimL->SetFillColor(0);
-lhcb7TeVPrelimL->SetTextAlign(12);
-lhcb7TeVPrelimL->SetBorderSize(0);
-lhcb7TeVPrelimL->SetTextSize(0.06);
-lhcb7TeVPrelimL->AddText("#splitline{#splitline{LHCb}{Preliminary}}{#scale[0.7]{#sqrt{s} = 7 TeV Data}}");
-
-TPaveText *lhcb7TeVPrelimR = new TPaveText(0.70 - lhcbStyle->GetPadRightMargin(),
-					   0.75 - lhcbStyle->SetPadTopMargin(0.05),
-					   0.95 - lhcbStyle->GetPadRightMargin(),
-					   0.85 - lhcbStyle->SetPadTopMargin(0.05),
-					   "BRNDC");
-lhcb7TeVPrelimR->SetFillColor(0);
-lhcb7TeVPrelimR->SetTextAlign(12);
-lhcb7TeVPrelimR->SetBorderSize(0);
-lhcb7TeVPrelimR->AddText("#splitline{#splitline{LHCb}{Preliminary}}{#scale[0.7]{#sqrt{s} = 900 eV Data}}");
-
-TPaveText *lhcb0_9TeVPrelimL = new TPaveText(lhcbStyle->GetPadLeftMargin() + 0.05,
-					   0.78 - lhcbStyle->SetPadTopMargin(0.05),
-					   lhcbStyle->GetPadLeftMargin() + 0.30,
-					   0.88 - lhcbStyle->SetPadTopMargin(0.05),
-					   "BRNDC");
-lhcb0_9TeVPrelimL->SetFillColor(0);
-lhcb0_9TeVPrelimL->SetTextAlign(12);
-lhcb0_9TeVPrelimL->SetBorderSize(0);
-lhcb0_9TeVPrelimL->SetTextSize(0.06);
-lhcb0_9TeVPrelimL->AddText("#splitline{#splitline{LHCb}{Preliminary}}{#scale[0.7]{#sqrt{s} = 900 GeV Data}}");
-
-TText *lhcbLabel = new TText();
-lhcbLabel->SetTextFont(lhcbFont);
-lhcbLabel->SetTextColor(1);
-lhcbLabel->SetTextSize(0.04);
-lhcbLabel->SetTextAlign(12);
-
-TLatex *lhcbLatex = new TLatex();
-lhcbLatex->SetTextFont(lhcbFont);
-lhcbLatex->SetTextColor(1);
-lhcbLatex->SetTextSize(0.04);
-lhcbLatex->SetTextAlign(12);
-
-gROOT->SetStyle("lhcbStyle");
-gROOT->ForceStyle();
-
-
-
+  //cout << "-------------------------" << endl;  
+  //cout << "Set LHCb Style - Feb 2012" << endl;
+  //cout << "-------------------------" << endl;  
+  
 }
+
 
