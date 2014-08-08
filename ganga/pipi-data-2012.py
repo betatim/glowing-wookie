@@ -1,10 +1,11 @@
 import sys
-if len(sys.argv) > 1:
+if len(sys.argv) > 2:
   polarity = sys.argv[1]
+  comment = sys.argv[2]
 else:
-  sys.exit("You need to specify the magnet polarity")
-  
-if len(sys.argv) > 2: # specify test after the polarity to run a test job
+  sys.exit("You need to specify the magnet polarity and comment")
+
+if len(sys.argv) > 3: # specify test after the polarity to run a test job
   test = True
   evtMax = 10000
 else:
@@ -12,10 +13,10 @@ else:
   evtMax = -1
 
 j = Job(name="pipi-data-2012-mag%s%s"%(polarity, "-test" if test else ""))
-j.application = DaVinci(version="v33r4",
-                        optsfile="../wookie/options_common.py", 
+j.application = DaVinci(version="v33r8",
+                        optsfile="../wookie/options_common.py",
                         extraopts = """
-execute( 
+execute(
   stripRun = False,
   stripConf = "default",
   stripLine = "pipi",
@@ -28,7 +29,9 @@ execute(
 """ % (evtMax, polarity)
                     )
 j.backend = Dirac()
+j.comment = comment
 
+j.prepare()
 dataset = j.application.readInputData("../data/stripping20_completecharm_%s.py"%polarity)
 
 
@@ -41,8 +44,11 @@ if test:
   n_files_per_job = 20
 else:
   j.inputdata = dataset
-  
+
 j.splitter = SplitByFiles(filesPerJob=n_files_per_job)
+
+#j.postprocessors.append(RootMerger(overwrite = True, ignorefailed = True))
+#j.postprocessors[-1].files = ['Demu_NTuple.root']
 
 print j.name
 j.submit()

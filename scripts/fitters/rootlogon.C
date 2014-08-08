@@ -7,8 +7,8 @@ rootlogon() {
 //  gROOT->ProcessLine(".L Bs2DsKTool.cxx+");
 //  gROOT->ProcessLine(".L Simulation.C");
 //  gROOT->ProcessLine(".L Fit.C");
-//  gROOT->ProcessLine(".x Style.C");
-  gROOT->ProcessLine(".x lhcbstyle.C");
+//  gROOT->ProcessLine(".x Style.C")
+  gROOT->ProcessLine(".x /afs/cern.ch/user/t/tbird/lhcbstyle.C");
 //  gROOT->SetStyle("Plain");
   gROOT->ProcessLine("TBrowser t;");
 }

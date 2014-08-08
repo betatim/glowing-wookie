@@ -1,0 +1,37 @@
+ +---------------------------------------------------------------------------------------------------+
+ | Location                                   |   Total  |       Mean      |   rms   |  min |   max  |
+ +---------------------------------------------------------------------------------------------------+
+ |  BhadronCompleteEvent                      |        0 |       0         |         |      |        |
+ |  Calo/RawEvent                             |      123 |       1         |         |      |        |
+ |  Charm                                     |        0 |       0         |         |      |        |
+ |  CharmCompleteEvent/pPhys/Particles        |     1074 |     8.7+-0.6    | 6.6     |    5 | 53     |
+ |  CharmCompleteEvent/pPhys/RecVertices      |       39 |       1         |         |      |        |
+ |  CharmCompleteEvent/pPhys/Relations        |      120 |       1         |         |      |        |
+ |  CharmCompleteEvent/pPhys/Vertices         |      449 |     3.7+-0.3    | 3.5     |    1 | 27     |
+ |  CharmCompleteEvent/pRec/Vertex/Primary    |      340 |     2.8+-0.1    | 1.4     |    1 | 7      |
+ |  Dimuon                                    |        0 |       0         |         |      |        |
+ |  Leptonic                                  |        0 |       0         |         |      |        |
+ |  Muon/RawEvent                             |      123 |       1         |         |      |        |
+ |  Other/RawEvent                            |      123 |       1         |         |      |        |
+ |  PID                                       |        0 |       0         |         |      |        |
+ |  Radiative                                 |        0 |       0         |         |      |        |
+ |  Rec/Header                                |      123 |       1         |         |      |        |
+ |  Rec/Status                                |      123 |       1         |         |      |        |
+ |  Rec/Summary                               |      123 |       1         |         |      |        |
+ |  Rich/RawEvent                             |      123 |       1         |         |      |        |
+ |  Strip/pPhys/DecReports                    |      123 |       1         |         |      |        |
+ |  Trigger/RawEvent                          |      123 |       1         |         |      |        |
+ |  pRec/Calo/Electrons                       |     7088 |    57.6+-3.4    | 37.3    |    7 | 145    |
+ |  pRec/Calo/MergedPi0s                      |      179 |     1.5+-0.1    | 1.5     |    0 | 8      |
+ |  pRec/Calo/Photons                         |     9369 |    76.2+-2.2    | 24.3    |   21 | 148    |
+ |  pRec/Calo/SplitPhotons                    |      358 |     2.9+-0.3    | 3.0     |    0 | 16     |
+ |  pRec/Muon/MuonPID                         |    14429 |   117.3+-8.0    | 89.2    |   22 | 387    |
+ |  pRec/ProtoP/Charged                       |    18438 |   149.9+-8.9    | 99.2    |   34 | 427    |
+ |  pRec/ProtoP/Neutrals                      |     9906 |    80.5+-2.3    | 25.7    |   21 | 154    |
+ |  pRec/Rich/PIDs                            |    20988 |   170.6+-10.4   | 115.4   |   38 | 504    |
+ |  pRec/Track/Best                           |    40500 |   329.3+-19.6   | 217.0   |   72 | 911    |
+ |  pRec/Track/Muon                           |     2087 |    17.0+-1.7    | 18.7    |    0 | 81     |
+ |  pRec/Vertex/Primary                       |      355 |     2.9+-0.1    | 1.4     |    1 | 7      |
+ |  pRec/Vertex/V0                            |      547 |     4.4+-0.5    | 6.0     |    0 | 54     |
+ +---------------------------------------------------------------------------------------------------+
+   Analysed 123 events

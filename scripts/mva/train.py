@@ -95,7 +95,7 @@ class Selection(object):
 
     def reset_counters(self):
         self._Ntotal = self._Npassed = 0
-        
+
     @property
     def efficiency(self):
         return self._Npassed, self._Ntotal
@@ -103,6 +103,15 @@ class Selection(object):
     def enable_vars(self, tree):
         for br in self._branches:
             tree.SetBranchStatus(br, True)
+
+class AllSelector(Selection):
+    def __init__(self):
+        Selection.__init__(self, [])
+
+    def __call__(self, evt):
+        self._Ntotal += 1
+        self._Npassed += 1
+        return True
 
 class Trigger(Selection):
     def __init__(self, lines):
@@ -162,7 +171,7 @@ def safe_varname(varname):
     bad_chars = "[]{}()-+*/"
     translation = string.maketrans(bad_chars, "_"*len(bad_chars))
     return varname.translate(translation)
-    
+
 def add_events(factory, tree, variables,
                selectors, signal=True,
                Nmax=16000):
@@ -182,10 +191,10 @@ def add_events(factory, tree, variables,
 
     for select in selectors:
         select.enable_vars(tree)
-        
+
     for var in variables:
         var.enable_vars(tree)
-        
+
     is_training = (True, False)
     vals = R.std.vector(R.Double)()
 
@@ -197,7 +206,7 @@ def add_events(factory, tree, variables,
 
         if not all([s(evt) for s in selectors]):
             continue
-            
+
         vals.clear()
         for v in variables:
             vals.push_back(v(evt))
@@ -207,7 +216,7 @@ def add_events(factory, tree, variables,
             add_train_evt(vals, 1.)
         else:
             add_test_evt(vals, 1.)
-            
+
 def add_variables(factory, variables, spectators):
     for var in variables:
         factory.AddVariable(var.name, "F")
@@ -217,91 +226,68 @@ def add_variables(factory, variables, spectators):
 
 
 if __name__ == "__main__":
-    f_sig = R.TFile(config.ntuplepath + "/mcemu/strip_emu.root")
-    tree_sig = f_sig.Demu_NTuple.Get("Demu_NTuple")
-    f_bg = R.TFile(config.ntuplepath + "/emu/strip_emu.root")
-    tree_bg = f_bg.Demu_NTuple.Get("Demu_NTuple")
+    f_sig = R.TFile(config.datasets["mcmvaemu2011"]["file"])
+    tree_sig = f_sig.Get(config.datasets["mcmvaemu2011"]["tree"])
+    f_bg = R.TFile(config.datasets["mvaemu2011blind"]["file"])
+    tree_bg = f_bg.Get(config.datasets["mvaemu2011blind"]["tree"])
 
     tree_sig.SetBranchStatus("*", False)
     tree_bg.SetBranchStatus("*", False)
-    
+
     #fname = config.workingpath + "/d2emu-tmva.root"
     fname = "./d2emu-tmva.root"
     out_file = R.TFile(fname, "RECREATE")
-    
+
     factory = TMVA.Factory("d2emu", out_file, "!Color")
 
     variables = [V("D0_CosTheta"), #theta*
                  V("D0_DOCA"),
-                 D0Pointing(),
+                 V("D0_pointing"),
+                 #D0Pointing(),
                  V("D0_VChi2_per_NDOF"),
                  V("D0_MinIPChi2_PRIMARY"),
                  V("D0_IPChi2"),
                  V("Dst_MinIPChi2_PRIMARY"),
-                 #V("x1_CosTheta"),
-                 LeptonCosTheta(), #theta
-                 MinV(["x1_IPCHI2_OWNPV", "x2_IPCHI2_OWNPV"]),
-                 MinV(["x1_PT", "x2_PT"]),
-                 D0PtScaledIso(),
+                 ####V("x1_CosTheta"),
+                 #LeptonCosTheta(), #theta
+                 V("LepCosTheta"),
+                 #MinV(["x1_IPCHI2_OWNPV", "x2_IPCHI2_OWNPV"]),
+                 V("minx1_IPCHI2_OWNPV_x2_IPCHI2_OWNPV"),
+                 #MinV(["x1_PT", "x2_PT"]),
+                 #V("minx1_PT_x2_PT"),
+                 #D0PtScaledIso(),
+                 V("D0_PtScaledIso"),
+                 V("D0_DelEta"),
+                 V("D0_DelPhi"),
              ]
-    spectators = [V("D0_M"),
-                  V("Dst_M"),
-                  V("pi_ProbNNe"),
-                  V("pi_ProbNNpi"),
-                  V("pi_ProbNNp"),
-                  V("pi_ProbNNk"),
-                  V("pi_ProbNNmu"),
-                  V("pi_ProbNNghost"),
-                  V("x1_BremMultiplicity"),
-                  V("x1_ProbNNk"),
-                  V("x1_ProbNNpi"),
-                  V("x1_ProbNNp"),
-                  V("x1_ProbNNe"),
-                  V("x1_ProbNNmu"),
-                  V("x1_ProbNNghost"),
-                  V("x1_PIDe"),
-                  V("x1_PIDmu"),
-                  V("x1_PIDK"),
-                  V("x1_isMuon"),
-                  V("x1_cp_0.50"),
-                  V("x1_cmult_0.50"),
-                  V("x2_ProbNNk"),
-                  V("x2_ProbNNp"),
-                  V("x2_ProbNNpi"),
-                  V("x2_ProbNNe"),
-                  V("x2_ProbNNmu"),
-                  V("x2_ProbNNghost"),
-                  V("x2_PIDe"),
-                  V("x2_PIDmu"),
-                  V("x2_PIDK"),
-                  V("x2_cp_0.50"),
-                  V("x2_cmult_0.50"),
-                  DeltaV("Dst_M", "D0_M"),
-                  V("Dst_L0MuonDecision_TOS"),
-                  V("Dst_L0ElectronDecision_TOS"),
+    spectators = [V("D0_Mass"),
+                  V("Dst_Mass"),
+                  V("Del_Mass"),
               ]
-    
-    
+
+
     add_variables(factory,
                   variables,
                   spectators)
 
-    pid_selection = PIDSelection()
-    hlt2_selection = Trigger(["Dst_Hlt2CharmHadD02HH_D02PiPiDecision_TOS",
-                              "Dst_Hlt2CharmHadD02HH_D02KPiDecision_TOS",
-                              "Dst_Hlt2CharmHadD02HH_D02KKDecision_TOS",
-                              #"Dst_Hlt2Dst2PiD02KKDecision_TOS",
-                              #"Dst_Hlt2Dst2PiD02PiPiDecision_TOS",
-                              #"Dst_Hlt2Dst2PiD02KPiDecision_TOS"
-                              ])
-    hlt1_selection = Trigger(["Dst_Hlt1TrackMuonDecision_TOS",
-                              #"Dst_Hlt1TrackAllL0Decision_TOS",
-                              ])
-    l0_selection = Trigger(["Dst_L0MuonDecision_TOS",
-                            #"Dst_L0ElectronDecision_TOS",
-                            ])
-    selectors = [pid_selection, l0_selection,
-                 hlt1_selection, hlt2_selection]
+    all_selector = AllSelector()
+    #pid_selection = PIDSelection()
+    #hlt2_selection = Trigger(["Dst_Hlt2CharmHadD02HH_D02PiPiDecision_TOS",
+                              #"Dst_Hlt2CharmHadD02HH_D02KPiDecision_TOS",
+                              #"Dst_Hlt2CharmHadD02HH_D02KKDecision_TOS",
+                              ##"Dst_Hlt2Dst2PiD02KKDecision_TOS",
+                              ##"Dst_Hlt2Dst2PiD02PiPiDecision_TOS",
+                              ##"Dst_Hlt2Dst2PiD02KPiDecision_TOS"
+                              #])
+    #hlt1_selection = Trigger(["Dst_Hlt1TrackMuonDecision_TOS",
+                              ##"Dst_Hlt1TrackAllL0Decision_TOS",
+                              #])
+    #l0_selection = Trigger(["Dst_L0MuonDecision_TOS",
+                            ##"Dst_L0ElectronDecision_TOS",
+                            #])
+    #selectors = [pid_selection, l0_selection,
+                 #hlt1_selection, hlt2_selection]
+    selectors = [all_selector]
 
     # Aim to get 2*Nmax events both for signal and background
     # so we can train on Nmax events and test on Nmax
@@ -323,7 +309,7 @@ if __name__ == "__main__":
         Np, Nt = select.efficiency
         print "Background efficiency of %s cuts %i/%i = %.5f"%(select, Np, Nt, Np/float(Nt))
         select.reset_counters()
-    
+
     options = "NormMode=None"
     factory.PrepareTrainingAndTestTree(R.TCut(""), R.TCut(""),
                                        options)
@@ -371,29 +357,33 @@ if __name__ == "__main__":
     #max_depths = (1,2,3,4,5,6,7,8,9,10)
     n_trees = (1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640)
     max_depths = (1,2,3,4,5,6,7,8,9,10)
-#BDT_grad_30_120_7_1_10:    
-    n_trees = (120,)
-    max_depths = (7,)
-    for trees,max_depth,weighted,shrink,nnodes in itertools.product(n_trees,
-                                                                    max_depths,
-                                                                    (1,),
+#BDT_grad_30_120_7_1_10:
+    n_trees = (110,120,130)
+    max_depths = (6,7,8)
+    for boost_type,nnodes,trees,max_depth,weighted,shrink in itertools.product(
+                                                                    ("Grad",),
+                                                                    (30,),
+                                                                    (172,),
+                                                                    (4,),
+                                                                    (0,),
                                                                     #(0.01,0.02,0.05,0.1,0.2,0.3,0.7,1.),
-                                                                    (0.05,),
+                                                                    (0.1,),
                                                                     #(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)
-                                                                    (30,)
+
                                                                     ):
             factory.BookMethod(TMVA.Types.kBDT,
 			       #"BDT_ada",
-                               "BDT_grad_%i_%i_%i_%i_%i"%(nnodes, trees, max_depth, weighted, shrink*100),
+                               "BDT_%s_%i_%i_%i_%i_%i"%(boost_type, nnodes, trees, max_depth, weighted, shrink*100),
                                "NNodesMax=%i:"
                                "DoBoostMonitor=1:Shrinkage=%f:"
-                               "NTrees=%i:BoostType=Grad:nCuts=100:MaxDepth=%i:" # nCuts=-1 is better but errors so its 20
+                               "NTrees=%i:BoostType=%s:nCuts=30:MaxDepth=%i:" # nCuts=-1 is better but errors so its 20
                                "PruneMethod=NoPruning:UseWeightedTrees=%i"%(nnodes,
                                                                             shrink,
                                                                             trees,
+                                                                            boost_type,
                                                                             max_depth,
                                                                             weighted))
-                                                                            
+
     #method = factory.BookMethod(TMVA.Types.kBDT, "BDT",
                    #":".join([
                        #"!H",
@@ -407,8 +397,8 @@ if __name__ == "__main__":
                        #"nCuts=20",
                        #"PruneMethod=NoPruning",
                        #]))
-                                                                            
-    
+
+
     print "Training"
     factory.TrainAllMethods()
     print "Testing"
@@ -418,4 +408,4 @@ if __name__ == "__main__":
     print "Closing"
     out_file.Close()
     print "Closed"
-    
+

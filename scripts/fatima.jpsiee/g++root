@@ -1,0 +1,12 @@
+#!/bin/bash
+
+
+set -x
+
+for i in $* ; do
+  g++ -g -O2 -pipe -Wall -W -Woverloaded-virtual -fPIC -Iinclude `root-config --cflags` -o $i.o -c $i
+done
+
+g++ -O2 `( for i in $* ; do echo $i.o ; done ) | xargs echo` `for i in \`root-config --cflags\` ; do echo $i ; done | grep -- "-m"` `root-config --glibs` -lRooFit -o $1.exe
+
+

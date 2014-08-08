@@ -1,0 +1,12 @@
+#<B/S> <name> <filename.root> <path/to/ntuple> <weight>
+
+B /afs/cern.ch/work/t/tbird/demu/ntuples/emu/pid_emu2011.root   subTree 12
+#B /afs/cern.ch/work/t/tbird/demu/ntuples/mcpipi/pid_emu.root    subTree 200
+S /afs/cern.ch/work/t/tbird/demu/ntuples/mcemu/pid_emu.root     subTree 0.0003 
+#S /afs/cern.ch/work/t/tbird/demu/ntuples/mcemu/strip_emu.root     Demu_NTuple/Demu_NTuple 0.000000000001 
+  
+#B /afs/cern.ch/work/t/tbird/demu/ntuples/emu/pid_emu2011.root   Demu_NTuple/Demu_NTuple 1
+#B /afs/cern.ch/work/t/tbird/demu/ntuples/mcpipi/pid_emu.root    Demu_NTuple/Demu_NTuple 1
+#S /afs/cern.ch/work/t/tbird/demu/ntuples/mcemu/pid_emu.root     Demu_NTuple/Demu_NTuple 1 
+##S /afs/cern.ch/work/t/tbird/demu/ntuples/mcemu/strip_emu.root     Demu_NTuple/Demu_NTuple 0.000000000001 
+  

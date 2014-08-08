@@ -4,7 +4,7 @@ if len(sys.argv) > 1:
   polarity = sys.argv[1]
 else:
   sys.exit("You need to specify the magnet polarity")
-  
+
 if len(sys.argv) > 2: # specify test after the polarity to run a test job
   test = True
   evtMax = 1000
@@ -13,10 +13,10 @@ else:
   evtMax = -1
 
 j = Job(name="emu-data-2012-mag%s%s"%(polarity, "-test" if test else ""))
-j.application = DaVinci(version="v33r4",
-                        optsfile="../wookie/options_common.py", 
+j.application = DaVinci(version="v33r8",
+                        optsfile="../wookie/options_common.py",
                         extraopts = """
-execute( 
+execute(
   stripRun = False,
   stripConf = "default",
   stripLine = "emu",
@@ -30,6 +30,8 @@ execute(
                     )
 j.backend = Dirac()
 
+j.prepare()
+
 dataset = j.application.readInputData("../data/stripping20r0p1_completecharm_%s.py"%polarity)
 
 
@@ -42,8 +44,11 @@ if test:
   n_files_per_job = 40
 else:
   j.inputdata = dataset
-  
+
 j.splitter = SplitByFiles(filesPerJob=n_files_per_job)
+
+j.postprocessors.append(RootMerger(overwrite = True, ignorefailed = True))
+j.postprocessors[-1].files = ['Demu_NTuple.root']
 
 print j.name
 j.submit()

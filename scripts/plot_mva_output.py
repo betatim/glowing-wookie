@@ -13,37 +13,95 @@ import sys
 #ds = str(sys.argv[1])
 
 from ROOT import gROOT
+gROOT.ProcessLine(".x lhcbstyle.C")
 gROOT.SetBatch(True)
 
-import random
-import subprocess
 import ROOT
+from ROOT import TFile, gDirectory, TLine, TCanvas, gPad
+from wookie import config as wookie_config
 
-from math import fabs, pi
+to_plot = [
+  ("emu2011unblind",False,ROOT.kGray,wookie_config.datasets["fitteremu2011unblind"],""),
+  ("emu2011blind",False,ROOT.kBlack,wookie_config.datasets["fitteremu2011blind"],""),
 
-from ROOT import TFile, TStopwatch, gROOT, gDirectory, TLine
-from ROOT import gROOT, TFile, TTreeFormula, TCanvas, TChain, THStack
+  ("mcemu2011",False,ROOT.kRed,wookie_config.datasets["mcfitteremu2011"],""),
+  ("mcemu2012",True,ROOT.kRed+2,wookie_config.datasets["mcfitteremu2012"],""),
 
+  ("pipi2011",False,ROOT.kGreen,wookie_config.datasets["fitterpipi2011"],"abs(Del_Mass-145.5)<0.5 && abs(D0_Mass-1867.5)<15"),
+  ("pipi2012",False,ROOT.kGreen+2,wookie_config.datasets["fitterpipi2012"],"abs(Del_Mass-145.5)<0.5 && abs(D0_Mass-1867.5)<15"),
+
+  #("kpi2011",False,ROOT.kBlue,wookie_config.datasets["fitterkpi2011"],"abs(Del_Mass-145.5)<0.5 && abs(D0_Mass-1867.5)<15"),
+  #("kpi2012",False,ROOT.kBlue+2,wookie_config.datasets["fitterkpi2012"],"abs(Del_Mass-145.5)<0.5 && abs(D0_Mass-1867.5)<15"),
+
+  ]
+
+nSplit = 3
+
+
+def integrate_plot(plot):
+  total = 0
+  bin_num = 0
+  while bin_num < plot.GetNbinsX()+2:
+    total += plot.GetBinContent(bin_num)
+    plot.SetBinContent(bin_num,total)
+    bin_num += 1
 
 tc = TCanvas("tc", "tc",800,600)
-f = TFile("/afs/cern.ch/user/t/tbird/emu/glowing-wookie/scripts/mva/d2emu-tmva.root")
-tt = f.Get("TestTree")
-tt.Draw("BDT_grad_30_120_7_1_5>>sig(100,-1,1)","classID==0")
-sig = gDirectory.Get("sig")
-tt.Draw("BDT_grad_30_120_7_1_5>>bkg(100,-1,1)","classID==1")
-bkg = gDirectory.Get("bkg")
 
-sig.Scale(1./sig.GetEntries())
-bkg.Scale(1./bkg.GetEntries())
+files = []
+hists = []
+lines = []
+splits = []
 
-sig.SetTitle("")
-sig.SetStats(False)
-sig.GetXaxis().SetTitle("BDT Output")
-sig.GetYaxis().SetTitleOffset(1.2)
-sig.GetYaxis().SetTitle("Arb. Units")
-bkg.SetLineColor(ROOT.kRed)
+for name,split,colour,file_obj,cut in to_plot:
+  print "Plotting", name
+  files.append(TFile(file_obj["file"]))
+  #files[-1].ls()
+  tt = files[-1].Get(file_obj["tree"])
+  #print tt
+  tt.Draw("BDT_ada>>h_%s(100,-1,1)"%(name),cut)
+  hist = gDirectory.Get("h_%s"%(name))
 
-sig.Draw()
-bkg.Draw("same")
+  if split:
+    integrated_hist = hist.Clone("h_int_%s"%(name))
+    integrate_plot(integrated_hist)
 
+    total = integrated_hist.GetEntries()
+    max_val = hist.GetMaximum()
+
+    i = 1.
+    while int(i)<(nSplit):
+      bin_num = 0
+      while bin_num < integrated_hist.GetNbinsX()+2:
+        bin_val = integrated_hist.GetBinContent(bin_num)
+        if bin_val > float(total)*i/float(nSplit):
+          splits.append((integrated_hist.GetBinCenter(bin_num),colour))
+          break
+        bin_num += 1
+      i += 1.
+
+  hist.Scale(1./hist.GetEntries())
+  hist.SetStats(False)
+  hist.GetXaxis().SetTitle("BDT Output")
+  hist.GetYaxis().SetDecimals(True)
+  #hist.GetYaxis().SetTitleOffset(1.2)
+  hist.GetYaxis().SetTitle("Arb. Units")
+  hist.SetLineColor(colour)
+  hists.append(hist)
+
+for i,(hist) in enumerate(hists):
+  if i == 0:
+    hist.Draw()
+  else:
+    hist.Draw("same")
+
+tc.Update()
+
+for split,colour in splits:
+  print "line:", (split,0., split,gPad.GetUymax()*0.9)
+  lines.append(TLine(split,0., split,gPad.GetUymax()*0.9))
+  lines[-1].SetLineColor(colour)
+  lines[-1].Draw("same")
+
+tc.SaveAs("mva_output.png")
 tc.SaveAs("mva_output.pdf")

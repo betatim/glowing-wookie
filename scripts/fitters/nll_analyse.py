@@ -202,9 +202,9 @@ def validateMinMax(name,val):
     if val < 0.001:
       print "# Attempted value", val, "hits limits", 0.001
       return 0.001
-    elif val > 10:
-      print "# Attempted value", val, "hits limits", 10
-      return 10
+    #elif val > 10:
+      #print "# Attempted value", val, "hits limits", 10
+      #return 10
   elif "Scale" in name:
     if val < 0.0001:
       print "# Attempted value", val, "hits limits", 0.0001
@@ -345,6 +345,8 @@ while True:
           print "# ---->>>> changeRatio up",changeRatio,"at",x[i],":",i, (y[i-1]-y[i]),(y[i]-y[i+1])
         #print "found min range"
     elif minFound:
+      #print "#ELEPHANT", i, x[i-1], y[i-3], y[i-2], y[i-1], y[i], y[i+1], y[i+2]
+      #print "#ELEPHANT",y[i] > nllHeight, not nllError(y[i-1],badValues), not nllError(y[i-2],badValues), not nllError(y[i-3],badValues), y[i]!=y[i+1]
       if y[i] > nllHeight and not nllError(y[i-1],badValues) and not nllError(y[i-2],badValues) and not nllError(y[i-3],badValues) and y[i]!=y[i+1]:
         changeRatio = (y[i-1]-y[i])/(y[i]-y[i+1]) if i > 2 else 1.
         if y[i] < nllHeight*0.02 or (changeRatio < 1.2 and changeRatio > 0.8):
@@ -354,7 +356,6 @@ while True:
       elif nllError(y[i],badValues) and nllError(y[i+1],badValues) and nllError(y[i+2],badValues) and not nllError(y[i-1],badValues) and not nllError(y[i-2],badValues) and not nllError(y[i-3],badValues):
         maxFound = x[i-1]
         #print y[i], y[i-1],x[i-1]
-        #print "#ELEPHANT", i, x[i-1], y[i-3], y[i-2], y[i-1], y[i], y[i+1], y[i+2]
 
     if not lowestFound:
       #print y[i] < nllHeight, not nllError(y[i]) , not nllError(y[i+1]) , not nllError(y[i+2])
@@ -385,6 +386,15 @@ while True:
   if minFound == x[2]:
     minFound = False
 
+  if minFound and not maxFound:
+    print "#",name," has a low last bin. Orig limits",xMin,xMax
+  elif not minFound and maxFound:
+    print "#",name," has a low first bin. Orig limits",xMin,xMax
+  elif not minFound and not maxFound:
+    print "#",name," has a low first and last bin! Orig limits", xMin,xMax
+
+  print "# %s %s"%(str(minFound),str(maxFound))
+
   if args.shrink: #TODO: produces "setMax(False)" for some reason
     newMin = minFound
     newMax = maxFound
@@ -393,13 +403,6 @@ while True:
     if not newMax: newMax = highestFound
     if not newMin: newMin = extrapMin(x,y,xMin,xMax,xLen,name)
     if not newMax: newMax = extrapMax(x,y,xMin,xMax,xLen,name)
-
-    if minFound and not maxFound:
-      print "#",name," has a low last bin. Orig limits",xMin,xMax
-    elif not minFound and maxFound:
-      print "#",name," has a low first bin. Orig limits",xMin,xMax
-    elif not minFound and not maxFound:
-      print "#",name," has a low first and last bin! Orig limits", xMin,xMax
 
     if lowestFound and not highestFound:
       print "#",name," has errors at low end of range. Orig limits",xMin,xMax

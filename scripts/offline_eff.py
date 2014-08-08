@@ -48,7 +48,8 @@ likeSignCut = "x1_ID*x2_ID>0"
 pipiPidCut = "x1_ProbNNpi > 0.6 && x2_ProbNNpi > 0.6 && x1_ProbNNpi*x2_ProbNNpi > 0.7 && pi_ProbNNpi > 0.6 && x1_ProbNNk < 0.7  && x2_ProbNNk < 0.7  && pi_ProbNNk < 0.7"
 trigPipiCut = "( Dst_L0HadronDecision_TOS == 1 ) && ( Dst_Hlt1TrackAllL0Decision_TOS == 1) && ( Dst_Hlt2Dst2PiD02PiPiDecision_TOS == 1 )"
 
-emuPidCut = "x1_ProbNNe>0.45 && pi_ProbNNghost<0.05 && x2_ProbNNghost<0.05 && x2_ProbNNmu>0.3 && x2_ProbNNk<0.55 && pi_ProbNNpi>0.45 && x1_ProbNNk<0.8"
+emuPidCut = "x1_BremMultiplicity == 0 && x1_ProbNNe>0.45 && pi_ProbNNghost<0.05 && x2_ProbNNghost<0.05 && x2_ProbNNmu>0.3 && x2_ProbNNk<0.55 && pi_ProbNNpi>0.45 && x1_ProbNNk<0.8"
+#emuPidCut = "x1_ProbNNe>0.45 && pi_ProbNNghost<0.05 && x2_ProbNNghost<0.05 && x2_ProbNNmu>0.3 && x2_ProbNNk<0.55 && pi_ProbNNpi>0.45 && x1_ProbNNk<0.8"
 emuTrigCut = "Dst_L0MuonDecision_TOS == 1 && Dst_Hlt1TrackMuonDecision_TOS== 1 && (Dst_Hlt2CharmHadD02HH_D02PiPiDecision_TOS == 1 || Dst_Hlt2CharmHadD02HH_D02KPiDecision_TOS == 1 || Dst_Hlt2CharmHadD02HH_D02KKDecision_TOS == 1 )"
 
 directory = "/afs/cern.ch/work/t/tbird/demu/ntuples/"
@@ -65,6 +66,24 @@ config = {
   },
   'emu': {
     'infile' : directory+"mcemu/strip_emu.root",
+    'precuts': combine_cuts([(emuTrigCut,True),(likeSignCut,False)]),
+    'cuts'   : combine_cuts([(emuPidCut,True),(emuTrigCut,True),(likeSignCut,False)]),
+    'inPath' : "Demu_NTuple/Demu_NTuple",
+  },
+  'emukk': {
+    'infile' : directory+"mckk/strip_emu.root",
+    'precuts': combine_cuts([(emuTrigCut,True),(likeSignCut,False)]),
+    'cuts'   : combine_cuts([(emuPidCut,True),(emuTrigCut,True),(likeSignCut,False)]),
+    'inPath' : "Demu_NTuple/Demu_NTuple",
+  },
+  'emukpi': {
+    'infile' : directory+"mckpi/strip_emu.root",
+    'precuts': combine_cuts([(emuTrigCut,True),(likeSignCut,False)]),
+    'cuts'   : combine_cuts([(emuPidCut,True),(emuTrigCut,True),(likeSignCut,False)]),
+    'inPath' : "Demu_NTuple/Demu_NTuple",
+  },
+  'emupipi': {
+    'infile' : directory+"mcpipi/strip_emu.root",
     'precuts': combine_cuts([(emuTrigCut,True),(likeSignCut,False)]),
     'cuts'   : combine_cuts([(emuPidCut,True),(emuTrigCut,True),(likeSignCut,False)]),
     'inPath' : "Demu_NTuple/Demu_NTuple",

@@ -2,6 +2,10 @@
 *swp
 *~
 *.tmp
+*.png
+*.root
 *.bak
 *.backup
 gmon.out
+AutoDict_*
+plots

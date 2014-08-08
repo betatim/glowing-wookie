@@ -1,0 +1,5 @@
+#<B/S> <name> <filename.root> <path/to/ntuple> <weight>
+
+B background /afs/cern.ch/work/t/tbird/demu/ntuples/emu/strip_emu.root   Demu_NTuple/Demu_NTuple 1
+S signal /afs/cern.ch/work/t/tbird/demu/ntuples/mcemu/strip_emu.root Demu_NTuple/Demu_NTuple 1
+  

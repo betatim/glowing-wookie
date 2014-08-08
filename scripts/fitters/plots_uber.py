@@ -2,17 +2,19 @@
 
 import sys
 
-if len(sys.argv) != 2:
-  sys.exit("This program takes one argument, the file name to analyse")
+if len(sys.argv) != 2+1:
+  sys.exit("This program takes two arguments, the file name to analyse and the output directory")
 
 from ROOT import gROOT
-gROOT.ProcessLine(".x lhcbstyle.C")
-#gROOT.SetBatch(True)
+gROOT.ProcessLine(".x ../lhcbstyle.C")
+gROOT.SetBatch(True)
 
 import ROOT
-from ROOT import TFile, TCanvas, TPaveText, TPad, TGraph, TLegend, gPad, TH1D
+from ROOT import TFile, TCanvas, TPaveText, TPad, TGraph, TLegend, gPad, TH1D, TLine
 
 ROOT.gErrorIgnoreLevel = ROOT.kError +20
+
+out_dir = sys.argv[2]
 
 f = TFile.Open(sys.argv[1])
 keys = f.GetListOfKeys()
@@ -27,26 +29,27 @@ def inTitle(plotName,field,name):
   except IndexError:
     return False
 
-def asymPlot(plotName):
-  return inTitle(plotName,2,"Asym")
-def timePlot(plotName):
-  return inTitle(plotName,2,"Time")
-def massPlot(plotName):
-  return inTitle(plotName,2,"Mass")
+def d0Plot(plotName):
+  return inTitle(plotName,3,"D0M")
+def delmPlot(plotName):
+  return inTitle(plotName,3,"DelM")
+
 def nllPlot(plotName):
   return inTitle(plotName,1,"NllOf")
+
 def corrsPlot(plotName):
   return plotName == "CorrelationHist"
-def fullData(plotName):
-  return inTitle(plotName,1,"FullData")
-def asymData(plotName):
-  return (inTitle(plotName,1,"AsymData") or inTitle(plotName,-1,"fullDataSet"))
-def midData(plotName):
-  return inTitle(plotName,1,"MidData")
-def lowData(plotName):
-  return inTitle(plotName,1,"LowData")
-def dataPlot(plotName):
-  return inTitle(plotName,1,"Data") and ( inTitle(plotName,3,"CORTAU") or inTitle(plotName,3,"DMASS") )
+
+#def fullData(plotName):
+  #return inTitle(plotName,1,"FullData")
+#def asymData(plotName):
+  #return (inTitle(plotName,1,"AsymData") or inTitle(plotName,-1,"fullDataSet"))
+#def midData(plotName):
+  #return inTitle(plotName,1,"MidData")
+#def lowData(plotName):
+  #return inTitle(plotName,1,"LowData")
+#def dataPlot(plotName):
+  #return inTitle(plotName,1,"DataSet") )
 
 
 def removeThings(plotName):
@@ -57,12 +60,17 @@ def removeThings(plotName):
 
 resizedOnce = []
 
+lines = []
+
 
 def savePlot(plot,plotPull,filename,longPlot=True):
 
   if plotPull:
     plotPull.GetYaxis().SetRangeUser(-5,5)
-    plotPull.SetMarkerStyle(2)
+    #plotPull.SetMarkerStyle(2)
+    #plotPull.SetMarkerColor(ROOT.kBlue)
+    plotPull.SetFillColor(ROOT.kBlue-2)
+    lines.append( TLine(plotPull.GetXaxis().GetXmax(),0.,plotPull.GetXaxis().GetXmax(),0.) )
 
   cNorm.Clear()
   cLong.Clear()
@@ -126,13 +134,14 @@ def savePlot(plot,plotPull,filename,longPlot=True):
     plotPullTh1.GetXaxis().SetTickLength(0.1)
 
     plotPullTh1.GetYaxis().SetTitle("Pull / #sigma")
-    plotPullTh1.GetYaxis().SetTitleFont(62)
+    plotPullTh1.GetYaxis().SetTitleFont(132)
     plotPullTh1.GetYaxis().SetNdivisions(205)
 
     plotPullTh1.GetXaxis().SetLabelSize(0.15)
     plotPullTh1.GetXaxis().SetLabelOffset(0.022)
     plotPullTh1.GetXaxis().SetTitleSize(0.18)
     plotPullTh1.GetXaxis().SetTitleOffset(0.78)
+    plotPullTh1.GetXaxis().SetTitleFont(132)
 
     plotPullTh1.GetYaxis().SetLabelSize(0.15)
     plotPullTh1.GetYaxis().SetLabelOffset(0.009)
@@ -144,8 +153,12 @@ def savePlot(plot,plotPull,filename,longPlot=True):
 
 
   plot.GetYaxis().SetTitleOffset(1)
-  plot.GetYaxis().SetTitleSize(0.06)
   plot.GetXaxis().SetTitleSize(0.06)
+  plot.GetYaxis().SetTitleSize(0.06)
+  plot.GetXaxis().SetTitleFont(132)
+  plot.GetYaxis().SetTitleFont(132)
+  plot.GetXaxis().SetLabelFont(132)
+  plot.GetYaxis().SetLabelFont(132)
 
 
   tl = False
@@ -157,7 +170,8 @@ def savePlot(plot,plotPull,filename,longPlot=True):
     pNorm1.cd()
   gPad.SetTopMargin(0.12)
   plot.Draw()
-  #gPad.Update()
+  gPad.Update()
+  
   #if "asym" not in filename and "nll" not in filename:
     ##if gPad.GetLogy():
       ##plot.GetYaxis().SetRangeUser(.8,plot.GetMinimum()*1.3)
@@ -188,15 +202,15 @@ def savePlot(plot,plotPull,filename,longPlot=True):
       ##plot.GetYaxis().SetRangeUser(gPad.GetUymin(),gPad.GetUymax()*1.15)
   gPad.Update()
 
-  if "data" in filename:
-    if "mass" in filename:
-      if "log" in filename:
-        plot.GetYaxis().SetRangeUser(1000,100000)
-        gPad.Update()
-    elif "time" in filename:
-      if "log" in filename and not "logx" in filename:
-        plot.GetYaxis().SetRangeUser(10,30000)
-        gPad.Update()
+  #if "data" in filename:
+    #if "mass" in filename:
+      #if "log" in filename:
+        #plot.GetYaxis().SetRangeUser(1000,100000)
+        #gPad.Update()
+    #elif "time" in filename:
+      #if "log" in filename and not "logx" in filename:
+        #plot.GetYaxis().SetRangeUser(10,30000)
+        #gPad.Update()
 
   #plot.Draw()
   #if plot.getObject(int(plot.numItems())-1).ClassName() == "TPave":
@@ -209,10 +223,12 @@ def savePlot(plot,plotPull,filename,longPlot=True):
   if plotPull:
     pNorm2.cd()
     plotPullTh1.Draw("AXIS")
-    plotPull.Draw("P")
+    lines[-1].Draw()
+    plotPull.Draw("B")
 
-  print "   ","autoPlots/"+filename+".pdf"
-  cNorm.SaveAs("autoPlots/"+filename+".pdf")
+  print "   ",out_dir+"/"+filename+".pdf"
+  cNorm.SaveAs(out_dir+"/"+filename+".pdf")
+  cNorm.SaveAs(out_dir+"/"+filename+".png")
 
   if longPlot and plotPull:
     cLong.cd()
@@ -220,8 +236,9 @@ def savePlot(plot,plotPull,filename,longPlot=True):
     plot.Draw()
     if tl:
       tl.Draw()
-    print "   ","autoPlots/"+filename+"-nopull.pdf"
-    cLong.SaveAs("autoPlots/"+filename+"-nopull.pdf")
+    print "   ",out_dir+"/"+filename+"-nopull.pdf"
+    cLong.SaveAs(out_dir+"/"+filename+"-nopull.pdf")
+    cLong.SaveAs(out_dir+"/"+filename+"-nopull.png")
 
 def saveCorrs(corrs):
   corrs.GetXaxis().SetLabelOffset(0.004)
@@ -238,7 +255,7 @@ def saveCorrs(corrs):
 
   palette = TPaletteAxis(85.14702,7.550805,88.31997,72.82681,corrs);
   palette.SetLabelColor(1);
-  palette.SetLabelFont(62);
+  palette.SetLabelFont(132);
   palette.SetLabelOffset(0.005);
   palette.SetLabelSize(0.04);
   palette.SetTitleOffset(1);
@@ -252,7 +269,8 @@ def saveCorrs(corrs):
   corrs.GetListOfFunctions().Add(palette,"br");
 
   corrs.Draw("colz")
-  c.SaveAs("autoPlots/corrs.pdf")
+  c.SaveAs(out_dir+"/corrs.pdf")
+  c.SaveAs(out_dir+"/corrs.png")
 
 def genLegend(plot):
   dataAdded = False
@@ -324,30 +342,27 @@ def giveTitle(plot,plotName):
   if nllPlot(plotName):
     plot.GetXaxis().SetTitle("Fitted Value of "+plotName[6:])
     plot.GetYaxis().SetTitle("Projection of -log(likelihood)")
-    "nll-all-"+plotName[6:]
+    #"nll-all-"+plotName[6:]
   else:
-    if "Time" in plotName or "B_CORTAU" in plotName:
-      plot.GetXaxis().SetTitle("Corrected Proper Time / ps")
-    elif "Mass" in plotName or "D_DMASS_Ds" in plotName:
-      plot.GetXaxis().SetTitle("KK#pi Mass - D^{+}_{s} PDG Mass / MeV c^{-2}")
-    if asymPlot(plotName):
-      plot.GetXaxis().SetTitle("Corrected Proper Time / ps")
-      plot.GetYaxis().SetTitle("Asymmetry")
-    else:
-      plot.GetYaxis().SetTitle("Candidates")
+    if d0Plot(plotName):
+      plot.GetXaxis().SetTitle("m(D^{0}) [MeV c^{-2}]")
+    elif delmPlot(plotName):
+      plot.GetXaxis().SetTitle("m(D^{*}) - m(D^{0}) [MeV c^{-2}]")
+    plot.GetYaxis().SetTitle("Candidates")
   if plotName[-5:] == "_Pull":
     plot.GetYaxis().SetTitle("Pull / #sigma")
 
 def resizePlot(plot,plotName):
-  if timePlot(plotName):
-    if midData(plotName):
-      plot.GetXaxis().SetRangeUser(0,1.8)
-    elif lowData(plotName):
-      plot.GetXaxis().SetRangeUser(0,.5)
-  elif asymPlot(plotName):
-    if inTitle(plotName,-1,"ds"):
-      plot.GetXaxis().SetRangeUser(0,5)
-      plot.GetYaxis().SetRangeUser(-.2,.2)
+  pass
+  #if timePlot(plotName):
+    #if midData(plotName):
+      #plot.GetXaxis().SetRangeUser(0,1.8)
+    #elif lowData(plotName):
+      #plot.GetXaxis().SetRangeUser(0,.5)
+  #elif asymPlot(plotName):
+    #if inTitle(plotName,-1,"ds"):
+      #plot.GetXaxis().SetRangeUser(0,5)
+      #plot.GetYaxis().SetRangeUser(-.2,.2)
 
 
 
@@ -355,23 +370,23 @@ def resizePlot(plot,plotName):
 #led = genLegend(tmpPlot)
 #cNorm.cd()
 #led.Draw()
-#cNorm.SaveAs("autoPlots/legend.pdf")
+#cNorm.SaveAs(out_dir+"/legend.pdf")
 
 
-dmdNll = f.Get("NllOf_T_Sig_Bd_dM")
-dmsNll = f.Get("NllOf_T_Sig_Bs_dM")
+#dmdNll = f.Get("NllOf_T_Sig_Bd_dM")
+#dmsNll = f.Get("NllOf_T_Sig_Bs_dM")
 
-dmdNll.GetXaxis().SetTitle("Fitted Value of #Delta m_{d}")
-dmsNll.GetXaxis().SetTitle("Fitted Value of #Delta m_{s}")
+#dmdNll.GetXaxis().SetTitle("Fitted Value of #Delta m_{d}")
+#dmsNll.GetXaxis().SetTitle("Fitted Value of #Delta m_{s}")
 
-dmdNll.GetYaxis().SetTitle("Projection of -log(likelihood)")
-dmsNll.GetYaxis().SetTitle("Projection of -log(likelihood)")
+#dmdNll.GetYaxis().SetTitle("Projection of -log(likelihood)")
+#dmsNll.GetYaxis().SetTitle("Projection of -log(likelihood)")
 
-dmsNll.GetXaxis().SetRangeUser(0,50)
-dmsNll.GetYaxis().SetRangeUser(0,80)
+#dmsNll.GetXaxis().SetRangeUser(0,50)
+#dmsNll.GetYaxis().SetRangeUser(0,80)
 
-savePlot(dmdNll,False,"nll-dmd",False)
-savePlot(dmsNll,False,"nll-dms",False)
+#savePlot(dmdNll,False,"nll-dmd",False)
+#savePlot(dmsNll,False,"nll-dms",False)
 
 
 
@@ -394,6 +409,12 @@ while True:
   # Thats not a plot!
   if plotName == "RooFitResults":
     continue
+  # Thats not a plot!
+  if "DataSet" in plotName:
+    continue
+  # Thats not a plot!
+  if "ProcessID" in plotName:
+    continue
   ## for testing ...
   #if timePlot(plotName):
     #continue
@@ -415,7 +436,7 @@ while True:
   resizePlot(plot,plotName)
 
   plotPull = False
-  if not nllPlot(plotName) and not dataPlot(plotName) and not corrsPlot(plotName):
+  if not nllPlot(plotName) and not corrsPlot(plotName):
     print "   ",plotName+"_Pull"
     plotPull = TGraph(f.Get(plotName+"_Pull"))
     giveTitle(plotPull,plotName+"_Pull")
@@ -428,121 +449,52 @@ while True:
   titleTokens = []
 
   if nllPlot(plotName):
-    fileTokens = ["nll","all",plotName[6:]]
+    fileTokens = ["nll",plotName[6:]]
+    plot.GetYaxis().SetRangeUser(0.,2000.)
     savePlot(plot,plotPull,"-".join(fileTokens),False)
   #elif corrsPlot(plotName):
     #saveCorrs(plot)
-  elif dataPlot(plotName):
-    fileTokens = ["data"]
-    if inTitle(plotName,3,"CORTAU"):
-      fileTokens.append("time")
-    elif inTitle(plotName,3,"DMASS"):
-      fileTokens.append("mass")
-    if asymData(plotName):
-      if inTitle(plotName,3,"CORTAU"):
-        savePlotLogLin(plot,plotPull,"-".join(fileTokens))
-      elif inTitle(plotName,3,"DMASS"):
-        savePlotLogLin(plot,plotPull,"-".join(fileTokens),False)
+    
   else:
-    if timePlot(plotName):
-      fileTokens.append("time")
-    elif massPlot(plotName):
-      fileTokens.append("mass")
-    elif asymPlot(plotName):
-      fileTokens.append("asym")
+    if inTitle(plotName,2,"BDT1"):
+      fileTokens.append("BDT1")
+    elif inTitle(plotName,2,"BDT2"):
+      fileTokens.append("BDT2")
+    elif inTitle(plotName,2,"BDT3"):
+      fileTokens.append("BDT3")
+    elif inTitle(plotName,2,"Norm"):
+      fileTokens.append("Norm")
+      
+    if d0Plot(plotName):
+      fileTokens.append("d0m")
+    elif delmPlot(plotName):
+      fileTokens.append("delm")
+      
+    if inTitle(plotName,3,"D0M") and inTitle(plotName,5,"d0all"):
+      if inTitle(plotName,4,"delhigh"):
+        fileTokens.append("delhigh")
+      elif inTitle(plotName,4,"delsig"):
+        fileTokens.append("delsig")
+      elif inTitle(plotName,4,"dellow"):
+        fileTokens.append("dellow")
 
-    if massPlot(plotName):
-      if inTitle(plotName,3,"High"):
-        fileTokens.append("high")
-        titleTokens.append("High-n")
-      elif inTitle(plotName,3,"Low"):
-        fileTokens.append("low")
-        titleTokens.append("Low-n")
-    else:
-      if inTitle(plotName,3,"High"):
-        fileTokens.append("highn")
-        titleTokens.append("High-n")
-      elif inTitle(plotName,3,"Low"):
-        fileTokens.append("lown")
-        titleTokens.append("Low-n")
-
-    if inTitle(plotName,4,"lowm"):
-      fileTokens.append("lowm")
-    elif inTitle(plotName,4,"dd"):
-      fileTokens.append("dd")
-    elif inTitle(plotName,4,"midm"):
-      fileTokens.append("midm")
-    elif inTitle(plotName,4,"ds"):
-      fileTokens.append("ds")
-    elif inTitle(plotName,4,"dstarhighm"):
-      fileTokens.append("dstarhighm")
-    elif inTitle(plotName,4,"lowt"):
-      fileTokens.append("lowt")
-    elif inTitle(plotName,4,"midt"):
-      fileTokens.append("midt")
-    elif inTitle(plotName,4,"hight"):
-      fileTokens.append("hight")
-
-    if massPlot(plotName):
-      if inTitle(plotName,4,"Mixed"):
-        fileTokens.append("mixed")
-        titleTokens.append("Odd Tagged")
-      elif inTitle(plotName,4,"Unmixed"):
-        fileTokens.append("unmixed")
-        titleTokens.append("Even Tagged")
-    else:
-      if inTitle(plotName,5,"Mixed"):
-        fileTokens.append("mixed")
-        titleTokens.append("Odd tagged")
-      elif inTitle(plotName,5,"Unmixed"):
-        fileTokens.append("unmixed")
-        titleTokens.append("Even tagged")
-
-    if timePlot(plotName):
-      if midData(plotName):
-        fileTokens.append("zoom")
-        titleTokens.append("t<1.8ps")
-      elif lowData(plotName):
-        fileTokens.append("highzoom")
-        titleTokens.append("t<0.5ps")
-
-    if inTitle(plotName,4,"lowm"):
-      titleTokens.append("low kk#pi mass sideband")
-    elif inTitle(plotName,4,"dd"):
-      titleTokens.append("Dd signal")
-    elif inTitle(plotName,4,"midm"):
-      titleTokens.append("middle kk#pi mass sideband")
-    elif inTitle(plotName,4,"ds"):
-      titleTokens.append("Ds signal")
-    elif inTitle(plotName,4,"dstarhighm"):
-      titleTokens.append("high kk#pi mass sideband")
-    elif inTitle(plotName,4,"lowt"):
-      titleTokens.append("t<1ps")
-    elif inTitle(plotName,4,"midt"):
-      titleTokens.append("1<t<2ps")
-    elif inTitle(plotName,4,"hight"):
-      titleTokens.append("2<t<10ps")
-
-
-    #pt = TPaveText(.2,.8,.6,.9,"BRNDC")
-    #pt = TPaveText(.2,.9,.55,.99,"BRNDC")
-    pt = TPaveText(.3,.83+.09,.8,.99,"BRNDC")
-    pt.SetName("TPaveText_"+plotName)
-    pt.SetFillColor(19)
-    pt.SetLineWidth(3)
-    if len(titleTokens)>0:
-      pt.AddText(", ".join(titleTokens)+" region")
-      plot.addObject(pt)
-
-    if asymPlot(plotName):
-      savePlot(plot,plotPull,"-".join(fileTokens))
-    elif massPlot(plotName):
-      savePlotLogLin(plot,plotPull,"-".join(fileTokens),False)
-    elif midData(plotName) or lowData(plotName):
-      savePlot(plot,plotPull,"-".join(fileTokens))
-    else:
-      savePlotLogLin(plot,plotPull,"-".join(fileTokens))
-
+    if inTitle(plotName,3,"DelM") and inTitle(plotName,4,"delall"):
+      if inTitle(plotName,5,"dlow1"):
+        fileTokens.append("d0low1")
+      elif inTitle(plotName,5,"dlow2"):
+        fileTokens.append("d0low2")
+      elif inTitle(plotName,5,"dlow"):
+        fileTokens.append("d0low")
+      elif inTitle(plotName,5,"dsig"):
+        fileTokens.append("d0sig")
+      elif inTitle(plotName,5,"dhigh"):
+        fileTokens.append("d0high")
+      elif inTitle(plotName,5,"dhigh1"):
+        fileTokens.append("d0high1")
+      elif inTitle(plotName,5,"dhigh2"):
+        fileTokens.append("d0high2")
+    
+    savePlotLogLin(plot,plotPull,"_".join(fileTokens),False)
 
 
 

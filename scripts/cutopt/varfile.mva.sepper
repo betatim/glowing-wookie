@@ -1,0 +1,105 @@
+#<var>  <min>   <max>   <bins>  <units> <log/lin>
+
+D0_CosTheta -1 1 100 "" lin
+D0_DOCA 0 0.1 100 "" lin
+D0_VChi2_per_NDOF 0 10 100 "" lin
+D0_MinIPChi2_PRIMARY  0 15 100 "" lin
+D0_IPChi2  0 3000 100 "" lin
+Dst_MinIPChi2_PRIMARY  0 20 100 "" lin
+x1_CosTheta  -1 1 100 "" lin
+x1_IPCHI2_OWNPV*(x1_IPCHI2_OWNPV<x2_IPCHI2_OWNPV)+x2_IPCHI2_OWNPV*(x1_IPCHI2_OWNPV>x2_IPCHI2_OWNPV)  0 300 100 "" lin
+x1_IP_OWNPV*(x1_IP_OWNPV<x2_IP_OWNPV)+x2_IP_OWNPV*(x1_IP_OWNPV>x2_IP_OWNPV)  0 2 100 "" lin
+x1_PT*(x1_PT<x2_PT)+x2_PT*(x1_PT>x2_PT)  500 6000 100 "" lin
+pi_ProbNNe  0 1 100 "" lin
+pi_ProbNNpi  0 1 100 "" lin
+pi_ProbNNp  0 1 100 "" lin
+pi_ProbNNk  0 1 100 "" lin
+pi_ProbNNmu  0 1 100 "" lin
+pi_ProbNNghost  0 1 100 "" lin
+x1_BremMultiplicity  0 4 4 "" lin
+x1_ProbNNk  0 1 100 "" lin
+x1_ProbNNpi  0 1 100 "" lin
+x1_ProbNNp  0 1 100 "" lin
+x1_ProbNNe  0 1 100 "" lin
+x1_ProbNNmu  0 1 100 "" lin
+x1_ProbNNghost  0 1 100 "" lin
+x1_PIDe  -200 50 1000 "" lin
+x1_PIDmu  -200 50 1000 "" lin
+x1_PIDK  -200 50 1000 "" lin
+x1_isMuon  0 2 2 "" lin
+x1_cp_0.50  0 100000 100 "" lin
+x1_cmult_0.50  0 15 15 "" lin
+x2_ProbNNk  0 1 100 "" lin
+x2_ProbNNp  0 1 100 "" lin
+x2_ProbNNpi  0 1 100 "" lin
+x2_ProbNNe  0 1 100 "" lin
+x2_ProbNNmu  0 1 100 "" lin
+x2_ProbNNghost  0 1 100 "" lin
+x2_PIDe  -200 50 1000 "" lin
+x2_PIDmu  -200 50 1000 "" lin
+x2_PIDK  -200 50 1000 "" lin
+x2_cp_0.50  0 100000 100 "" lin
+x2_cmult_0.50  0 15 15 "" lin
+
+
+Dst_TAU  -0.01 0.01 100 "" lin
+D0_TAU  -0.01 0.01 100 "" lin
+D0_IP_OWNPV  0 0.2 100 "" lin
+D0_IPCHI2_OWNPV  0 15 100 "" lin
+Dst_IP_OWNPV  0 0.2 100 "" lin
+Dst_IPCHI2_OWNPV  0 15 100 "" lin
+Dst_DOCA 0 1 100 "" lin
+D0_PT 0 30000 100 "" lin
+Dst_PT 0 30000 100 "" lin
+x2_CosTheta  -1 1 100 "" lin
+pi_CosTheta  -1 1 100 "" lin
+Dst_CosTheta  -1 1 100 "" lin
+
+
+#x1_ProbNNe      0 1 100 "" lin
+#x1_ProbNNk      0 1 100 "" lin
+#x1_ProbNNp      0 1 100 "" lin
+#x1_ProbNNpi     0 1 100 "" lin
+#x1_ProbNNmu     0 1 100 "" lin
+#x1_ProbNNghost  0 1 100 "" lin
+#x2_ProbNNe      0 1 100 "" lin
+#x2_ProbNNk      0 1 100 "" lin
+#x2_ProbNNp      0 1 100 "" lin
+#x2_ProbNNpi     0 1 100 "" lin
+#x2_ProbNNmu     0 1 100 "" lin
+#x2_ProbNNghost  0 1 100 "" lin
+x1_ProbNNe*x2_ProbNNmu      0 1 100 "" lin
+(1-x2_ProbNNmu)*x2_ProbNNk  0 1 100 "" lin
+(1-x2_ProbNNmu)*x2_ProbNNpi 0 1 100 "" lin 
+(1-x2_ProbNNmu)*x2_ProbNNp  0 1 100 "" lin
+(1-x2_ProbNNmu)*x2_ProbNNe  0 1 100 "" lin 
+(1-x2_ProbNNmu)*x2_ProbNNghost  0 1 100 "" lin
+(1-x1_ProbNNe)*x1_ProbNNk   0 1 100 "" lin
+(1-x1_ProbNNe)*x1_ProbNNpi  0 1 100 "" lin
+(1-x1_ProbNNe)*x1_ProbNNmu  0 1 100 "" lin
+(1-x1_ProbNNe)*x1_ProbNNp   0 1 100 "" lin
+(1-x1_ProbNNe)*x1_ProbNNghost   0 1 100 "" lin
+(1-pi_ProbNNpi)*pi_ProbNNk   0 1 100 "" lin
+(1-pi_ProbNNpi)*pi_ProbNNe   0 1 100 "" lin
+(1-pi_ProbNNpi)*pi_ProbNNmu  0 1 100 "" lin
+(1-pi_ProbNNpi)*pi_ProbNNp   0 1 100 "" lin
+(1-pi_ProbNNpi)*pi_ProbNNghost   0 1 100 "" lin
+#pi_ProbNNe      0 1 100 "" lin
+#pi_ProbNNk      0 1 100 "" lin
+#pi_ProbNNp      0 1 100 "" lin
+#pi_ProbNNpi     0 1 100 "" lin
+#pi_ProbNNmu     0 1 100 "" lin
+#pi_ProbNNghost  0 1 100 "" lin
+
+
+
+#x1_ProbNNe>0.13&&x1_ProbNNk<0.75&&x1_ProbNNp<0.95&&x1_ProbNNpi<1&&x1_ProbNNmu<0.95&&x2_ProbNNe<0.73&&x2_ProbNNk<0.69&&x2_ProbNNp<0.95&&x2_ProbNNpi<1&&x2_ProbNNmu>0.13&&x1_ProbNNe*x2_ProbNNmu>0.13
+#Type File                S0---->S                Eff
+#S   0   emusigna        454803->403381          0.886936+/-0.000469567
+#B   0   sideband        962888->177588          0.184433+/-0.00039524
+#Total
+#Sw  403381+/-635.123    Bw   177588+/-421.412
+#Sw C/E 1                        Bw C/E 1
+#Eff 0.886936+/-0.000469567      Eff 0.184433+/-0.00039524
+#S/B 2.27144+/-0.00646865        B/S 0.440249+/-0.00125375
+#S/r(S+B)        529.223+/-11.315

@@ -1,2 +1,5 @@
 *.pdf
+*.png
+*.pkl
+*.root
 gmon.out

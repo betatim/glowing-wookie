@@ -84,6 +84,23 @@ def checkResultLimit(result):
       atlim.append(var)
   return len(atlim)
 
+def checkVarChange(result):
+  varList = result.floatParsFinal()
+  varListStart = result.floatParsInit()
+  i = varList.createIterator()
+  varChange={}
+  while True:
+    var = i.Next()
+    if not var:
+      break
+    if var.isConstant():
+      continue
+    varChange[var.GetName()] = (varListStart.find(var.GetName()).getVal()-var.getVal())/var.getError()
+
+  for name,val in varChange.iteritems():
+    print "{:<30}{:< 10.2f}".format(name,val)
+  return varChange
+
 
 
 def checkVarLimits(w):
